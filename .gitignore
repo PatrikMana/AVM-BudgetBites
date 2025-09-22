@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignore backend build artifacts
+backend/target/
+
+# Ignore frontend node modules and build output
+frontend/my-app/node_modules/
+frontend/my-app/dist/
+frontend/my-app/.env
