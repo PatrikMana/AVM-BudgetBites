@@ -4,10 +4,11 @@ services:
     image: postgres
     environment:
       POSTGRES_USER: admin
-      POSTGRES:PASSWORD: password
-      PGDATA: /data/postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: budgetbites
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - db:/data/postgres
+      - db:/var/lib/postgresql/data/pgdata
     ports:
       - "5332:5432"
     networks:
