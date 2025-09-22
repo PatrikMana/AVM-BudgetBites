@@ -1,10 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    fetch('/api/hello')
+      .then((res) => res.text())
+      .then((text) => setMessage(text))
+      .catch(() => setMessage('Failed to fetch from backend'))
+  }, [])
 
   return (
     <>
@@ -17,6 +25,7 @@ function App() {
         </a>
       </div>
       <h1>Vite + React</h1>
+      <p>Server says: {message}</p>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
