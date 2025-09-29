@@ -1,27 +1,48 @@
-Projekt přeuspořádán
+# BudgetBites
 
-Struktura po přesunu:
+Full-stack aplikace pro správu rozpočtu - Spring Boot backend + React frontend.
 
-- backend/   -> Java Spring Boot projekt (původní obsah přesunut sem)
-- frontend/  -> Vite + React aplikace (beze změn)
+## Struktura projektu
 
-Jak spustit lokálně:
+```
+AVM-BudgetBites/
+├── .gitignore          # Společný gitignore pro celý projekt
+├── README.md           # Tento soubor
+├── docker-compose.yml  # PostgreSQL databáze
+├── backend/            # Spring Boot aplikace
+│   ├── src/
+│   ├── pom.xml
+│   ├── mvnw, mvnw.cmd
+│   └── target/
+└── frontend/           # React aplikace
+    ├── src/
+    ├── package.json
+    ├── vite.config.js
+    └── node_modules/
+```
 
-1) Backend (Java Spring Boot)
+## Spuštění aplikace
 
+### Backend (Spring Boot)
+```bash
 cd backend
-# build bez testů
-./mvnw -DskipTests package
-# nebo spustit přímo (spustí aplikaci)
 ./mvnw spring-boot:run
+```
+Aplikace běží na: http://localhost:8080
 
-2) Frontend (Vite + React)
-
-cd frontend/my-app
-npm install
+### Frontend (React)
+```bash
+cd frontend
+npm install  # pouze první spuštění
 npm run dev
+```
+Aplikace běží na: http://localhost:5173
 
-Poznámky:
-- Příkazy předpokládají Node.js a npm na systémové PATH.
-- Projekt byl přesunut pomocí Git (přesun je commitnutý). Pokud chcete jiný layout, dejte vědět.
+### Databáze (PostgreSQL)
+```bash
+docker-compose up -d
+```
 
+## API Endpointy
+
+- `GET /api/hello` - Test endpoint
