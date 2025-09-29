@@ -26,7 +26,7 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <p>Server says: {message}</p>
-      <div className="card">
+      <div className="flex">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
