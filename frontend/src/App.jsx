@@ -1,59 +1,54 @@
-import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
-import SplitText from "/Users/23065mm/IdeaProjects/BudgetBites/frontend/src/components/SplitText.jsx";
+import SplitText from './components/SplitText.jsx'
+import StaggeredMenu from './components/StaggeredMenu.jsx'
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [message, setMessage] = useState('')
+    const menuItems = [
+        { label: 'Home', ariaLabel: 'Go to home page', link: '/' },
+        { label: 'About', ariaLabel: 'Learn about us', link: '/about' },
+        { label: 'Services', ariaLabel: 'View our services', link: '/services' },
+        { label: 'Contact', ariaLabel: 'Get in touch', link: '/contact' }
+    ]
 
-  useEffect(() => {
-    fetch('/api/hello')
-      .then((res) => res.text())
-      .then((text) => setMessage(text))
-      .catch(() => setMessage('Failed to fetch from backend'))
-  }, [])
+    const socialItems = [
+        { label: 'Twitter', link: 'https://twitter.com' },
+        { label: 'GitHub', link: 'https://github.com' },
+        { label: 'LinkedIn', link: 'https://linkedin.com' }
+    ]
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <p>Server says: {message}</p>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-        <SplitText
-            text="Hello, GSAP!"
-            className="text-2xl font-semibold text-center"
-            delay={100}
-            duration={0.6}
-            ease="power3.out"
-            splitType="chars"
-            from={{ opacity: 0, y: 40 }}
-            to={{ opacity: 1, y: 0 }}
-            threshold={0.1}
-            rootMargin="-100px"
-            textAlign="center"
-            onLetterAnimationComplete={handleAnimationComplete}
-        />
-    </>
-  )
+    return (
+        <div className="app-layout">
+            {/* Left side menu */}
+            <aside className="menu-panel">
+                <StaggeredMenu
+                    position="left"
+                    items={menuItems}
+                    socialItems={socialItems}
+                    displaySocials={true}
+                    displayItemNumbering={true}
+                    menuButtonColor="#fff"
+                    openMenuButtonColor="#fff"
+                    changeMenuColorOnOpen={true}
+                    colors={['#B19EEF', '#5227FF']}
+                    accentColor="#ff6b6b"
+                />
+            </aside>
+
+            {/* Center content */}
+            <main className="main-content">
+                <SplitText
+                    text="Welcome to BudgetBites"
+                    className="splittext-heading"
+                    delay={100}
+                    duration={0.6}
+                    ease="power3.out"
+                    splitType="chars"
+                    from={{ opacity: 0, y: 40 }}
+                    to={{ opacity: 1, y: 0 }}
+                />
+            </main>
+        </div>
+    )
 }
 
 export default App
