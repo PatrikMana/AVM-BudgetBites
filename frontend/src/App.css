@@ -1,4 +1,12 @@
+/* App.css */
 @import "tailwindcss";
+
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
 
 /* Two-column layout */
 .app-layout {
