@@ -1,8 +1,15 @@
 {
+  "files": [],
   "compilerOptions": {
-    "baseUrl": ".", // important - makes the alias work relative to root
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
-    }
+      "@/*": ["./src/*"]
+    },
+    "noImplicitAny": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noUnusedLocals": false,
+    "strictNullChecks": false
   }
 }

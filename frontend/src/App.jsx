@@ -2,7 +2,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import About from './pages/About'
-import Layout from './pages/Layout'
+import Layout from './layout/layout.jsx'
+import Login from "./pages/Login";
 
 
 function App() {
@@ -12,8 +13,9 @@ function App() {
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<Layout />}>
-                        <Route path="/" element={<Home />} />
-                        <Route path="about" element={<About />} />
+                        <Route index element={<Home />} />         {/* renders at "/" */}
+                        <Route path="about" element={<About />} /> {/* renders at "/about" */}
+                        <Route path="login" element={<Login />} /> {/* renders at "/login" */}
                     </Route>
                 </Routes>
             </BrowserRouter>
