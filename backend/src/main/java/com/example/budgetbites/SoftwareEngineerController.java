@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/software-engineer")
+
 public class SoftwareEngineerController {
 
     private final SoftwareEngineerService softwareEngineerService;
@@ -14,12 +14,12 @@ public class SoftwareEngineerController {
         this.softwareEngineerService = softwareEngineerService;
     }
 
-    @GetMapping
+    @GetMapping("api/get/software-engineer")
     public List<SoftwareEngineer> getEngineers() {
         return softwareEngineerService.getAllSoftwareEngineers();
     }
 
-    @PostMapping
+    @PostMapping(("api/post/software-engineer"))
     public void AddSoftwareEngineer(@RequestBody SoftwareEngineer    softwareEngineer) {
         softwareEngineerService.insertSoftwareEngineer(softwareEngineer);
     }
