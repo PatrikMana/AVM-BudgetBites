@@ -60,6 +60,7 @@ a:hover {
 }
 
 body {
+    background: black;
     margin: 0;
     display: flex;
     place-items: center;
@@ -184,3 +185,40 @@ button:focus-visible {
         @apply bg-background text-foreground;
     }
 }
+
+/* Základ – tlačítko je pevně v rohu okna */
+.staggered-menu :is(button,[role="button"])[aria-expanded]{
+    position: fixed;
+    top: 16px;
+    left: 64px;              /* kde bude, když je menu ZAVŘENÉ */
+    z-index: 1000;
+}
+
+/* Když je menu OTEVŘENÉ, šoupni tlačítko dovnitř bílé lišty */
+.staggered-menu :is(button,[role="button"])[aria-expanded="true"]{
+    left: 300px;             /* přizpůsob šířce panelu (např. 320px – okraj) */
+    /* volitelně i vzhled, ať je pěkně vidět */
+    color: #000 !important;
+    border-color: #000 !important;
+    background: #fff !important;
+}
+
+/* (volitelně) mobil – užší panel → menší posun */
+@media (max-width: 768px){
+    .staggered-menu :is(button,[role="button"])[aria-expanded="true"]{
+        left: 260px;
+    }
+}
+
+/* Vynutit, ať je logo vidět a má rozměr */
+.staggered-menu img {
+    display: block !important;
+    width: 140px !important;   /* uprav dle potřeby */
+    height: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    filter: none !important;
+}
+
+

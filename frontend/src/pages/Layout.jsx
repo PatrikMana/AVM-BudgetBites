@@ -1,5 +1,6 @@
 import { Outlet, Link } from 'react-router-dom'
-import StaggeredMenu from '../components/StaggeredMenu.jsx';
+import StaggeredMenu from '../components/StaggeredMenu.jsx'
+import cookingLogo from '../assets/Cooking.png'
 
 const menuItems = [
     { label: 'Home', ariaLabel: 'Go to home page', link: '/' },
@@ -16,22 +17,24 @@ const socialItems = [
 
 export default function Layout() {
     return (
+        <div className="staggered-menu h-screen bg-black">
         <div style={{ height: '100vh', background: '#1a1a1a' }}>
             <StaggeredMenu
-                position="right"
+                position="left"
                 items={menuItems}
                 socialItems={socialItems}
                 displaySocials={true}
                 displayItemNumbering={true}
                 menuButtonColor="#fff"
-                openMenuButtonColor="#fff"
+                openMenuButtonColor="#000"
                 changeMenuColorOnOpen={true}
                 colors={['#B19EEF', '#5227FF']}
-                logoUrl="/path-to-your-logo.svg"
+                logoUrl={cookingLogo}
                 accentColor="#ff6b6b"
                 onMenuOpen={() => console.log('Menu opened')}
                 onMenuClose={() => console.log('Menu closed')}
             />
+        </div>
         </div>
     )
 }
