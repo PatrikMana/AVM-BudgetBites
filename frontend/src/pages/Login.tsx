@@ -7,6 +7,8 @@ import { useToast } from "../hooks/use-toast";
 // @ts-ignore
 import heroImage from "../assets/react.svg";
 import * as React from "react";
+import Cookies from "js-cookie";
+
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -14,18 +16,72 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const token = Cookies.get("auth_token");
+    if (token) {
+        console.log("User is logged in:", token);
+    }
+
+    const handleLogin = async (e: React.FormEvent) => {
+        if (!/\S+@\S+\.\S+/.test(email)) {
+            toast({
+                title: "Invalid email",
+                description: "Please enter a valid email address.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         e.preventDefault();
         setLoading(true);
 
-        setTimeout(() => {
+        try {
+            // Example POST request (adjust URL to your backend)
+            const response = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || "Invalid credentials");
+            }
+
+            const data = await response.json();
+
+            // Save token in cookies (1-day expiry)
+            Cookies.set("auth_token", data.token, {
+                expires: 1,          // days
+                secure: true,        // HTTPS only
+                sameSite: "Strict",  // prevent CSRF
+            });
+
             toast({
                 title: "Welcome back!",
                 description: "You've successfully logged in.",
             });
+
+            // Redirect after short delay
+            setTimeout(() => {
+                window.location.href = "/dashboard";
+            }, 800);
+
+        } catch (error: any) {
+            toast({
+                title: "Login failed",
+                description: error.message || "Please try again.",
+                variant: "destructive",
+            });
+        } finally {
             setLoading(false);
-        }, 1000);
+        }
     };
+    const handleLogout = () => {
+        Cookies.remove("auth_token");
+        window.location.href = "/login";
+    };
+
+
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 gradient-dark">
