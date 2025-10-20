@@ -38,9 +38,9 @@ export default function Layout() {
                 displaySocials
                 displayItemNumbering
                 menuButtonColor="#fff"
-                openMenuButtonColor="#000"
+                openMenuButtonColor="#fff"
                 changeMenuColorOnOpen
-                colors={["#B19EEF", "#5227FF"]}
+                colors={["#F59E0B", "#16A34A"]}
                 logoUrl={cookingLogo}
                 accentColor="#ff6b6b"
                 onMenuOpen={() => {
