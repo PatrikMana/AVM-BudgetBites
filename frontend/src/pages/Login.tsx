@@ -1,157 +1,401 @@
+import * as React from "react";
 import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { useToast } from "../hooks/use-toast";
+import Cookies from "js-cookie";
 // @ts-ignore
 import heroImage from "../assets/react.svg";
-import * as React from "react";
-import Cookies from "js-cookie";
-
+import { UtensilsCrossed, CheckCircle } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 
 const Login = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const { toast } = useToast();
+  const { toast } = useToast();
 
-    const token = Cookies.get("auth_token");
-    if (token) {
-        console.log("User is logged in:", token);
+  // View state: 'auth' | 'verify' | 'success' bsahdbus
+  const [view, setView] = useState<'auth' | 'verify' | 'success'>('auth');
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Login state 
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+
+  // Signup state
+  const [signupUsername, setSignupUsername] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+
+  // Verification state
+  const [verificationCode, setVerificationCode] = useState("");
+  const [emailToVerify, setEmailToVerify] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Check if user already has a token
+  const token = Cookies.get("auth_token");
+  if (token) {
+    console.log("User is logged in:", token);
+  }
+
+  // Login handler
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Call the correct backend endpoint
+      const response = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          username: loginUsername, 
+          password: loginPassword 
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Invalid credentials");
+      }
+
+      // Backend currently returns plain text, so handle that
+      const successMessage = await response.text();
+      console.log("Login response:", successMessage);
+
+      // For now, create a mock token since backend doesn't return JWT yet
+      // TODO: Remove this when backend implements JWT
+      const mockToken = btoa(`${loginUsername}:${Date.now()}`);
+      Cookies.set("auth_token", mockToken, {
+        expires: 1,
+        secure: false,
+        sameSite: "Strict",
+      });
+
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully logged in.",
+      });
+
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 800);
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Signup handler
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (signupPassword !== signupConfirmPassword) {
+      toast({
+        title: "Passwords do not match",
+        description: "Please check your password and confirmation.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    const handleLogin = async (e: React.FormEvent) => {
-        if (!/\S+@\S+\.\S+/.test(email)) {
-            toast({
-                title: "Invalid email",
-                description: "Please enter a valid email address.",
-                variant: "destructive",
-            });
-            return;
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: signupUsername,
+          email: signupEmail,
+          password: signupPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        if (response.status === 409) {
+          throw new Error("This username or email is already registered. Please try logging in or use different credentials.");
         }
+        throw new Error(errorText || "Registration failed");
+      }
 
-        e.preventDefault();
-        setLoading(true);
+      const message = await response.text();
 
-        try {
-            // Example POST request (adjust URL to your backend)
-            const response = await fetch("/api/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
-            });
+      // Store email for verification
+      setEmailToVerify(signupEmail);
+      
+      // Switch to verification view
+      setView('verify');
 
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.message || "Invalid credentials");
-            }
+      toast({
+        title: "Check your email",
+        description: "We've sent you a verification code.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            const data = await response.json();
+  // Verification handler
+  const handleVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-            // Save token in cookies (1-day expiry)
-            Cookies.set("auth_token", data.token, {
-                expires: 1,          // days
-                secure: true,        // HTTPS only
-                sameSite: "Strict",  // prevent CSRF
-            });
+    try {
+      const response = await fetch("/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: emailToVerify,
+          verificationCode: verificationCode,
+        }),
+      });
 
-            toast({
-                title: "Welcome back!",
-                description: "You've successfully logged in.",
-            });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Verification failed");
+      }
 
-            // Redirect after short delay
-            setTimeout(() => {
-                window.location.href = "/dashboard";
-            }, 800);
+      const message = await response.text();
 
-        } catch (error: any) {
-            toast({
-                title: "Login failed",
-                description: error.message || "Please try again.",
-                variant: "destructive",
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-    const handleLogout = () => {
-        Cookies.remove("auth_token");
-        window.location.href = "/login";
-    };
+      // Auto-login after verification
+      const loginResponse = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          username: signupUsername, 
+          password: signupPassword 
+        }),
+      });
 
+      if (loginResponse.ok) {
+        const mockToken = btoa(`${signupUsername}:${Date.now()}`);
+        Cookies.set("auth_token", mockToken, {
+          expires: 1,
+          secure: false,
+          sameSite: "Strict",
+        });
 
+        setSuccessMessage("Registration successful! You are now logged in.");
+        setView('success');
+      } else {
+        setSuccessMessage("Email verified successfully! Please login.");
+        setView('success');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Verification failed",
+        description: error.message || "Please check your code.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center p-4 gradient-dark">
-            <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
-                {/* Hero Image */}
-                <div className="hidden md:block animate-fade-in">
-                    <img
-                        src={heroImage}
-                        alt="Budget Bites - Fresh and affordable food"
-                        className="rounded-2xl shadow-2xl glow-primary"
-                    />
-                    <div className="mt-6 text-center">
-                        <h1 className="text-5xl font-bold mb-2">
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Budget Bites
-              </span>
-                        </h1>
-                        <p className="text-muted-foreground text-lg">
-                            Eat healthy, spend smart
-                        </p>
-                    </div>
+  const handleLogout = () => {
+    Cookies.remove("auth_token");
+    window.location.href = "/login";
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* ...existing background effects... */}
+
+      <Card className="w-full max-w-md relative z-10 border-border/50 shadow-2xl animate-fade-in">
+        <CardHeader className="space-y-4 text-center">
+          <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow">
+            {view === 'success' ? (
+              <CheckCircle className="w-8 h-8 text-primary-foreground" />
+            ) : (
+              <UtensilsCrossed className="w-8 h-8 text-primary-foreground" />
+            )}
+          </div>
+          <div>
+            <CardTitle className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              Budget Bites
+            </CardTitle>
+            <CardDescription className="text-muted-foreground mt-2">
+              {view === 'auth' && "Delicious meals that fit your budget"}
+              {view === 'verify' && "Please verify your email"}
+              {view === 'success' && "Welcome!"}
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {view === 'auth' && (
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+
+            {/* Login Form */}
+            <TabsContent value="login" className="animate-slide-up">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-username">Username</Label>
+                  <Input
+                    id="login-username"
+                    type="text"
+                    placeholder="your_username"
+                    value={loginUsername}
+                    onChange={(e) => setLoginUsername(e.target.value)}
+                    required
+                    className="bg-muted/50 border-border"
+                  />
                 </div>
-
-                {/* Login Form */}
-                <div className="w-full max-w-md mx-auto animate-fade-in" style={{ animationDelay: "0.2s" }}>
-                    <Card className="border-border shadow-xl glow-primary">
-                        <CardHeader>
-                            <CardTitle className="text-2xl">Welcome back</CardTitle>
-                            <CardDescription>Enter your credentials to access your account</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleLogin} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="login-email">Email</Label>
-                                    <Input
-                                        id="login-email"
-                                        type="email"
-                                        placeholder="you@example.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        className="transition-all focus:glow-primary"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="login-password">Password</Label>
-                                    <Input
-                                        id="login-password"
-                                        type="password"
-                                        placeholder="••••••••"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        className="transition-all focus:glow-primary"
-                                    />
-                                </div>
-                                <Button
-                                    type="submit"
-                                    className="w-full text-base font-semibold transition-all hover:scale-105 hover:glow-primary"
-                                    disabled={loading}
-                                >
-                                    {loading ? "Logging in..." : "Log in"}
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Password</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    className="bg-muted/50 border-border"
+                  />
                 </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-primary hover:opacity-90 transition-all shadow-glow"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            {/* Signup Form */}
+            <TabsContent value="signup" className="animate-slide-up">
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-username">Username</Label>
+                  <Input
+                    id="signup-username"
+                    type="text"
+                    placeholder="choose_username"
+                    value={signupUsername}
+                    onChange={(e) => setSignupUsername(e.target.value)}
+                    required
+                    className="bg-muted/50 border-border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    required
+                    className="bg-muted/50 border-border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    required
+                    className="bg-muted/50 border-border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm">Confirm Password</Label>
+                  <Input
+                    id="signup-confirm"
+                    type="password"
+                    placeholder="••••••••"
+                    value={signupConfirmPassword}
+                    onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                    required
+                    className="bg-muted/50 border-border"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-primary hover:opacity-90 transition-all shadow-glow"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating account..." : "Create Account"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+          )}
+
+          {view === 'verify' && (
+            <div className="space-y-4 animate-slide-up">
+              <form onSubmit={handleVerification} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="verification-code">Verification Code</Label>
+                  <Input
+                    id="verification-code"
+                    type="text"
+                    placeholder="Enter 6-digit code"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    required
+                    maxLength={6}
+                    className="bg-muted/50 border-border text-center text-2xl tracking-widest"
+                  />
+                  <p className="text-sm text-muted-foreground text-center">
+                    Check your email: {emailToVerify}
+                  </p>
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-primary hover:opacity-90 transition-all shadow-glow"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Verifying..." : "Verify Email"}
+                </Button>
+              </form>
             </div>
-        </div>
-    );
+          )}
+
+          {view === 'success' && (
+            <div className="space-y-6 text-center animate-slide-up py-4">
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-foreground">
+                  {successMessage}
+                </h3>
+                <p className="text-muted-foreground">
+                  You can now access all features of Budget Bites!
+                </p>
+              </div>
+              <Button
+                onClick={() => window.location.href = "/"}
+                className="w-full bg-gradient-primary hover:opacity-90 transition-all shadow-glow"
+              >
+                Back to Home Page
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 };
 
 export default Login;
