@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import About from './pages/About'
-import Layout from './layout/layout.jsx'
+import Layout from './pages/Layout.jsx'
 import Login from "./pages/Login"
 import { Toaster } from "./components/ui/toaster"
 
