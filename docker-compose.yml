@@ -1,23 +1,26 @@
+version: '3.8'
+
 services:
-  db:
-    container_name: postgres-avm-budgetbites
-    image: postgres
+  postgres:
+    image: postgres:15
+    container_name: budgetbites-postgres
     environment:
+      POSTGRES_DB: budgetbites
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: budgetbites
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - db:/var/lib/postgresql/data/pgdata
     ports:
       - "5332:5432"
-    networks:
-      - db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-networks:
-  db:
-    driver: bridge
+  maildev:
+    image: maildev/maildev
+    container_name: budgetbites-maildev
+    ports:
+      - "1080:1080"  # Web interface
+      - "1025:1025"  # SMTP server
+    restart: unless-stopped
 
 volumes:
-  db:
+  postgres_data:
