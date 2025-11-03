@@ -3,6 +3,14 @@
   <component name="CopilotDiffPersistence">
     <option name="pendingDiffs">
       <map>
+        <entry key="$PROJECT_DIR$/backend/docker-compose.yml">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/backend/docker-compose.yml" />
+              <option name="updatedContent" value="version: '3.8'&#10;&#10;services:&#10;  postgres:&#10;    image: postgres:15&#10;    container_name: budgetbites-postgres&#10;    environment:&#10;      POSTGRES_DB: budgetbites&#10;      POSTGRES_USER: admin&#10;      POSTGRES_PASSWORD: password&#10;    ports:&#10;      - &quot;5332:5432&quot;&#10;    volumes:&#10;      - postgres_data:/var/lib/postgresql/data&#10;    restart: unless-stopped&#10;&#10;  maildev:&#10;    image: maildev/maildev&#10;    container_name: budgetbites-maildev&#10;    ports:&#10;      - &quot;1080:1080&quot;  # Web interface&#10;      - &quot;1025:1025&quot;  # SMTP server&#10;    restart: unless-stopped&#10;&#10;volumes:&#10;  postgres_data:" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
         <entry key="$PROJECT_DIR$/backend/pom_new.xml">
           <value>
             <PendingDiffInfo>
