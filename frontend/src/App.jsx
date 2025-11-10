@@ -2,14 +2,14 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import About from './pages/About'
-import Layout from './layout/layout.jsx'
-import Login from "./pages/Login";
+import Layout from './pages/Layout.jsx'
+import Login from "./pages/Login"
+import { Toaster } from "./components/ui/toaster"
 
 
 function App() {
     return (
         <div className="App">
-
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<Layout />}>
@@ -19,6 +19,7 @@ function App() {
                     </Route>
                 </Routes>
             </BrowserRouter>
+            <Toaster />
         </div>
     );
 }
