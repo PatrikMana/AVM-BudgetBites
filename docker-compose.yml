@@ -14,13 +14,13 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  maildev:
-    image: maildev/maildev
-    container_name: budgetbites-maildev
-    ports:
-      - "1080:1080"  # Web interface
-      - "1025:1025"  # SMTP server
-    restart: unless-stopped
+#  maildev:
+#    image: maildev/maildev
+#    container_name: budgetbites-maildev
+#    ports:
+#      - "1080:1080"  # Web interface
+#      - "1025:1025"  # SMTP server
+#    restart: unless-stopped
 
 volumes:
   postgres_data:
