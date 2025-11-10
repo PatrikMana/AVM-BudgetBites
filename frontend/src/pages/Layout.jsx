@@ -6,7 +6,7 @@ import { useState, useCallback } from "react";
 
 const menuItems = [
     { label: "Home", ariaLabel: "Go to home page", link: "/" },
-    { label: "About", ariaLabel: "Learn about us", link: "/about" },
+    { label: "Generate", ariaLabel: "Learn about us", link: "/generate" },
     { label: "Login", ariaLabel: "Log into page", link: "/login" },
 ];
 
@@ -39,9 +39,9 @@ export default function Layout() {
                 menuButtonColor="#fff"
                 openMenuButtonColor="#fff"
                 changeMenuColorOnOpen
-                colors={["#F59E0B", "#16A34A"]}
+                colors={["#10b981", "#059669"]}
                 logoUrl={cookingLogo}
-                accentColor="#ff6b6b"
+                accentColor="#10b981"
                 onMenuOpen={() => {
                     setMenuOpen(true);
                     // po otevření změř šířku panelu (pro vizuální vystředění obsahu napravo)
