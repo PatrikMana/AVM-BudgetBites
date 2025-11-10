@@ -39,9 +39,9 @@ export default function Layout() {
                 menuButtonColor="#fff"
                 openMenuButtonColor="#fff"
                 changeMenuColorOnOpen
-                colors={["#F59E0B", "#16A34A"]}
+                colors={["#10b981", "#059669"]}
                 logoUrl={cookingLogo}
-                accentColor="#ff6b6b"
+                accentColor="#10b981"
                 onMenuOpen={() => {
                     setMenuOpen(true);
                     // po otevření změř šířku panelu (pro vizuální vystředění obsahu napravo)
