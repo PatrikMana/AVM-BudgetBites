@@ -7,9 +7,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// přidány importy pro logování
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
     @Autowired
     private AuthService authService;
 
@@ -19,7 +26,7 @@ public class AuthController {
     // Nový endpoint pro registraci s emailem
     @PostMapping("/register")
     public ResponseEntity<String> registerWithEmail(@RequestBody RegisterRequest request) {
-        System.out.println("[REGISTER] username=" + request.getUsername() + ", email=" + request.getEmail());
+        logger.info("[REGISTER] username={}, email={}", request.getUsername(), request.getEmail());
         String message = authService.registerWithEmailVerification(
             request.getUsername(), 
             request.getEmail(), 
@@ -31,7 +38,7 @@ public class AuthController {
     // Nový endpoint pro verifikaci emailu
     @PostMapping("/verify-email")
     public ResponseEntity<String> verifyEmail(@RequestBody VerifyRequest request) {
-        System.out.println("[VERIFY] email=" + request.getEmail() + ", code=" + request.getVerificationCode());
+        logger.info("[VERIFY] email={}, code={}", request.getEmail(), request.getVerificationCode());
         String message = authService.verifyEmail(request.getEmail(), request.getVerificationCode());
         return ResponseEntity.ok(message);
     }
@@ -39,7 +46,7 @@ public class AuthController {
     // Původní endpoint pro zpětnou kompatibilitu
     @PostMapping("/register-simple")
     public ResponseEntity<String> registerSimple(@RequestBody LoginRequest request) {
-        System.out.println("[REGISTER-SIMPLE] username=" + request.getUsername());
+        logger.info("[REGISTER-SIMPLE] username={}", request.getUsername());
         authService.register(request.getUsername(), request.getPassword());
         return ResponseEntity.ok("Registrace úspěšná");
     }
