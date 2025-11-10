@@ -16,10 +16,20 @@ export default function Layout() {
     const [panelWidth, setPanelWidth] = useState(0);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    // Check login status
+    // Check login status and poll for changes
     useEffect(() => {
-        const username = Cookies.get("username");
-        setIsLoggedIn(!!username);
+        const checkLoginStatus = () => {
+            const username = Cookies.get("username");
+            setIsLoggedIn(!!username);
+        };
+
+        // Check immediately
+        checkLoginStatus();
+
+        // Check every 500ms for cookie changes (login/logout)
+        const interval = setInterval(checkLoginStatus, 500);
+
+        return () => clearInterval(interval);
     }, []);
 
     // Dynamic menu items based on login status
@@ -45,6 +55,7 @@ export default function Layout() {
         <>
             {/* FIXED overlay menu – nezabírá žádné místo v layoutu */}
             <StaggeredMenu
+                key={isLoggedIn ? 'logged-in' : 'logged-out'}
                 isFixed
                 position="left"
                 items={menuItems}
