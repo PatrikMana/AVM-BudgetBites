@@ -1,7 +1,7 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
-import About from './pages/About'
+import Generate from './pages/Generate'
 import Layout from './pages/Layout.jsx'
 import Login from "./pages/Login"
 import { Toaster } from "./components/ui/toaster"
@@ -14,7 +14,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Layout />}>
                         <Route index element={<Home />} />         {/* renders at "/" */}
-                        <Route path="about" element={<About />} /> {/* renders at "/about" */}
+                        <Route path="generate" element={<Generate />} /> {/* renders at "/about" */}
                         <Route path="login" element={<Login />} /> {/* renders at "/login" */}
                     </Route>
                 </Routes>

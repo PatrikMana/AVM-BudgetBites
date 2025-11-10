@@ -6,7 +6,7 @@ import { useState, useCallback } from "react";
 
 const menuItems = [
     { label: "Home", ariaLabel: "Go to home page", link: "/" },
-    { label: "About", ariaLabel: "Learn about us", link: "/about" },
+    { label: "Generate", ariaLabel: "Learn about us", link: "/generate" },
     { label: "Login", ariaLabel: "Log into page", link: "/login" },
 ];
 
