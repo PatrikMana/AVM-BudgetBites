@@ -11,6 +11,59 @@ import heroImage from "../assets/react.svg";
 import { UtensilsCrossed, CheckCircle } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 
+/**
+ * 🎨 LOGIN PAGE COLOR SYSTEM
+ * ==========================
+ * 
+ * HOW TO CHANGE COLORS:
+ * ---------------------
+ * 1. For quick changes: Edit the hex values in tailwind.config.js under theme.extend.colors.login
+ * 2. The LOGIN_COLORS object below maps semantic names to Tailwind classes
+ * 3. Change classes here if you want different Tailwind utilities
+ * 
+ * COLOR LOCATIONS:
+ * ----------------
+ * - Global theme colors: /frontend/tailwind.config.js (lines 6-40)
+ * - Login specific colors: /frontend/tailwind.config.js (lines 29-40)
+ * - This mapping: Below (LOGIN_COLORS object)
+ * 
+ * EXAMPLE: To change the primary button color from purple to blue:
+ * 1. Open tailwind.config.js
+ * 2. Find: brand.primary: '#B19EEF'
+ * 3. Change to: brand.primary: '#3b82f6' (or any color you want)
+ * 
+ * All buttons, gradients, and accents will automatically update!
+ */
+const LOGIN_COLORS = {
+  // Page & Card
+  pageBackground: 'bg-login-background',         // Main page background (#0a0a0a)
+  cardBackground: 'bg-login-cardBg',             // Card background (#1a1a1a)
+  cardBorder: 'border-login-cardBorder',         // Card border (#2a2a2a)
+  
+  // Buttons & Primary Actions
+  primaryButton: 'bg-brand-primary',             // Primary button (#B19EEF)
+  primaryButtonHover: 'hover:bg-login-primaryHover', // Button hover (#9B7EDF)
+  buttonText: 'text-white',                       // Button text color
+  
+  // Inputs
+  inputBackground: 'bg-login-inputBg',           // Input field background (#2a2a2a)
+  inputBorder: 'border-login-inputBorder',       // Input field border (#3a3a3a)
+  inputFocus: 'focus:ring-brand-primary',        // Input focus ring color
+  
+  // Text
+  primaryText: 'text-login-text',                // Main text color (#ffffff)
+  mutedText: '!text-login-textMuted',            // Secondary/muted text (#a0a0a0) - !important to override
+  titleGradient: 'bg-gradient-to-r from-brand-primary to-brand-secondary', // Title gradient
+  
+  // Icon & Logo
+  iconBackground: 'bg-gradient-to-br from-brand-primary to-brand-secondary', // Icon container
+  iconColor: 'text-white',                        // Icon color
+  
+  // States
+  successColor: 'text-login-success',            // Success state (#10b981)
+  errorColor: 'text-login-error',                // Error state (#ef4444)
+};
+
 const Login = () => {
   const { toast } = useToast();
 
@@ -213,132 +266,142 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* ...existing background effects... */}
+    <main className="w-screen min-h-dvh grid place-items-center p-6 bg-zinc-950">
+      <div className="mx-auto w-full max-w-md">
+        <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl backdrop-blur">
+          {/* Header */}
+          <div className="mb-6 flex items-start gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600/15 text-emerald-400 ring-1 ring-emerald-500/30">
+              {view === 'success' ? (
+                <CheckCircle className="h-6 w-6" />
+              ) : (
+                <UtensilsCrossed className="h-6 w-6" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-white">
+                Budget Bites
+              </h2>
+              <p className="text-sm text-zinc-400">
+                {view === 'auth' && "Delicious meals that fit your budget"}
+                {view === 'verify' && "Please verify your email"}
+                {view === 'success' && "Welcome!"}
+              </p>
+            </div>
+          </div>
 
-      <Card className="w-full max-w-md relative z-10 border-border/50 shadow-2xl animate-fade-in">
-        <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow">
-            {view === 'success' ? (
-              <CheckCircle className="w-8 h-8 text-primary-foreground" />
-            ) : (
-              <UtensilsCrossed className="w-8 h-8 text-primary-foreground" />
-            )}
-          </div>
-          <div>
-            <CardTitle className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Budget Bites
-            </CardTitle>
-            <CardDescription className="text-muted-foreground mt-2">
-              {view === 'auth' && "Delicious meals that fit your budget"}
-              {view === 'verify' && "Please verify your email"}
-              {view === 'success' && "Welcome!"}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
           {view === 'auth' && (
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 gap-2 mb-6 bg-zinc-800/60 border border-white/10 p-1 rounded-lg h-auto">
+              <TabsTrigger 
+                value="login" 
+                className="text-white text-sm py-2 px-4 rounded-md transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              >
+                Login
+              </TabsTrigger>
+              <TabsTrigger 
+                value="signup" 
+                className="text-white text-sm py-2 px-4 rounded-md transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              >
+                Sign Up
+              </TabsTrigger>
             </TabsList>
 
             {/* Login Form */}
             <TabsContent value="login" className="animate-slide-up">
               <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-username">Username</Label>
-                  <Input
+                <label className="block">
+                  <div className="mb-1 text-sm font-medium text-zinc-300">Username</div>
+                  <input
                     id="login-username"
                     type="text"
                     placeholder="your_username"
                     value={loginUsername}
                     onChange={(e) => setLoginUsername(e.target.value)}
                     required
-                    className="bg-muted/50 border-border"
+                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
-                  <Input
+                </label>
+                <label className="block">
+                  <div className="mb-1 text-sm font-medium text-zinc-300">Password</div>
+                  <input
                     id="login-password"
                     type="password"
                     placeholder="••••••••"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
-                    className="bg-muted/50 border-border"
+                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-                </div>
-                <Button
+                </label>
+                <button
                   type="submit"
-                  className="w-full bg-gradient-primary hover:opacity-90 transition-all shadow-glow"
                   disabled={isLoading}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isLoading ? "Signing in..." : "Sign In"}
-                </Button>
+                </button>
               </form>
             </TabsContent>
 
             {/* Signup Form */}
             <TabsContent value="signup" className="animate-slide-up">
               <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-username">Username</Label>
-                  <Input
+                <label className="block">
+                  <div className="mb-1 text-sm font-medium text-zinc-300">Username</div>
+                  <input
                     id="signup-username"
                     type="text"
                     placeholder="choose_username"
                     value={signupUsername}
                     onChange={(e) => setSignupUsername(e.target.value)}
                     required
-                    className="bg-muted/50 border-border"
+                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
+                </label>
+                <label className="block">
+                  <div className="mb-1 text-sm font-medium text-zinc-300">Email</div>
+                  <input
                     id="signup-email"
                     type="email"
                     placeholder="your@email.com"
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     required
-                    className="bg-muted/50 border-border"
+                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
+                </label>
+                <label className="block">
+                  <div className="mb-1 text-sm font-medium text-zinc-300">Password</div>
+                  <input
                     id="signup-password"
                     type="password"
                     placeholder="••••••••"
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
                     required
-                    className="bg-muted/50 border-border"
+                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-confirm">Confirm Password</Label>
-                  <Input
+                </label>
+                <label className="block">
+                  <div className="mb-1 text-sm font-medium text-zinc-300">Confirm Password</div>
+                  <input
                     id="signup-confirm"
                     type="password"
                     placeholder="••••••••"
                     value={signupConfirmPassword}
                     onChange={(e) => setSignupConfirmPassword(e.target.value)}
                     required
-                    className="bg-muted/50 border-border"
+                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
                   />
-                </div>
-                <Button
+                </label>
+                <button
                   type="submit"
-                  className="w-full bg-gradient-primary hover:opacity-90 transition-all shadow-glow"
                   disabled={isLoading}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isLoading ? "Creating account..." : "Create Account"}
-                </Button>
+                </button>
               </form>
             </TabsContent>
           </Tabs>
@@ -347,9 +410,9 @@ const Login = () => {
           {view === 'verify' && (
             <div className="space-y-4 animate-slide-up">
               <form onSubmit={handleVerification} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="verification-code">Verification Code</Label>
-                  <Input
+                <label className="block">
+                  <div className="mb-1 text-sm font-medium text-zinc-300 text-center">Verification Code</div>
+                  <input
                     id="verification-code"
                     type="text"
                     placeholder="Enter 6-digit code"
@@ -357,19 +420,19 @@ const Login = () => {
                     onChange={(e) => setVerificationCode(e.target.value)}
                     required
                     maxLength={6}
-                    className="bg-muted/50 border-border text-center text-2xl tracking-widest"
+                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500 text-center text-2xl tracking-widest"
                   />
-                  <p className="text-sm text-muted-foreground text-center">
-                    Check your email: {emailToVerify}
+                  <p className="text-sm text-zinc-400 text-center mt-2">
+                    Check your email: <span className="text-white">{emailToVerify}</span>
                   </p>
-                </div>
-                <Button
+                </label>
+                <button
                   type="submit"
-                  className="w-full bg-gradient-primary hover:opacity-90 transition-all shadow-glow"
                   disabled={isLoading}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isLoading ? "Verifying..." : "Verify Email"}
-                </Button>
+                </button>
               </form>
             </div>
           )}
@@ -377,24 +440,24 @@ const Login = () => {
           {view === 'success' && (
             <div className="space-y-6 text-center animate-slide-up py-4">
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-foreground">
+                <h3 className="text-2xl font-bold text-white">
                   {successMessage}
                 </h3>
-                <p className="text-muted-foreground">
+                <p className="text-zinc-400">
                   You can now access all features of Budget Bites!
                 </p>
               </div>
-              <Button
+              <button
                 onClick={() => window.location.href = "/"}
-                className="w-full bg-gradient-primary hover:opacity-90 transition-all shadow-glow"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500"
               >
                 Back to Home Page
-              </Button>
+              </button>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </main>
   );
 };
 
