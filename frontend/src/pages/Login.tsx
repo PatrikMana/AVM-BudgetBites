@@ -73,6 +73,18 @@ const Login = () => {
   const [view, setView] = useState<'auth' | 'verify' | 'success'>('auth');
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Show message if redirected from protected route
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('redirect') === 'protected') {
+      toast({
+        title: "Login Required",
+        description: "Please log in to access this page.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
   // Login state
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -124,7 +136,21 @@ const Login = () => {
       // TODO: Remove this when backend implements JWT
       const mockToken = btoa(`${loginUsername}:${Date.now()}`);
       Cookies.set("auth_token", mockToken, {
-        expires: 1,
+        expires: 7, // 7 days
+        secure: false,
+        sameSite: "Strict",
+      });
+      
+      // Store username and email for session persistence
+      Cookies.set("username", loginUsername, {
+        expires: 7, // 7 days
+        secure: false,
+        sameSite: "Strict",
+      });
+      
+      // Store a fake email for now (backend doesn't return it)
+      Cookies.set("email", `${loginUsername}@budgetbites.com`, {
+        expires: 7, // 7 days
         secure: false,
         sameSite: "Strict",
       });
@@ -135,7 +161,7 @@ const Login = () => {
       });
 
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = "/account";
       }, 800);
     } catch (error: any) {
       toast({
@@ -240,7 +266,20 @@ const Login = () => {
       if (loginResponse.ok) {
         const mockToken = btoa(`${signupUsername}:${Date.now()}`);
         Cookies.set("auth_token", mockToken, {
-          expires: 1,
+          expires: 7, // 7 days
+          secure: false,
+          sameSite: "Strict",
+        });
+        
+        // Store username and email for session persistence
+        Cookies.set("username", signupUsername, {
+          expires: 7, // 7 days
+          secure: false,
+          sameSite: "Strict",
+        });
+        
+        Cookies.set("email", signupEmail, {
+          expires: 7, // 7 days
           secure: false,
           sameSite: "Strict",
         });
@@ -457,10 +496,10 @@ const Login = () => {
                 </p>
               </div>
               <button
-                onClick={() => window.location.href = "/"}
+                onClick={() => window.location.href = "/account"}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500"
               >
-                Back to Home Page
+                Go to Account
               </button>
             </div>
           )}

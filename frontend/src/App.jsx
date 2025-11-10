@@ -4,6 +4,8 @@ import Home from './pages/Home'
 import Generate from './pages/Generate'
 import Layout from './pages/Layout.jsx'
 import Login from "./pages/Login"
+import Account from "./pages/Account"
+import ProtectedRoute from "./components/ProtectedRoute"
 import { Toaster } from "./components/ui/toaster"
 
 
@@ -14,8 +16,17 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Layout />}>
                         <Route index element={<Home />} />         {/* renders at "/" */}
-                        <Route path="generate" element={<Generate />} /> {/* renders at "/about" */}
+                        <Route path="generate" element={
+                            <ProtectedRoute>
+                                <Generate />
+                            </ProtectedRoute>
+                        } /> {/* renders at "/generate" - PROTECTED */}
                         <Route path="login" element={<Login />} /> {/* renders at "/login" */}
+                        <Route path="account" element={
+                            <ProtectedRoute>
+                                <Account />
+                            </ProtectedRoute>
+                        } /> {/* renders at "/account" - PROTECTED */}
                     </Route>
                 </Routes>
             </BrowserRouter>
