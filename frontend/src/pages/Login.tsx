@@ -5,6 +5,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { useToast } from "../hooks/use-toast";
+import { useOutletContext } from "react-router-dom";
 import Cookies from "js-cookie";
 // @ts-ignore
 import heroImage from "../assets/react.svg";
@@ -66,6 +67,7 @@ const LOGIN_COLORS = {
 
 const Login = () => {
   const { toast } = useToast();
+  const { menuOpen, panelWidth } = useOutletContext<{ menuOpen: boolean; panelWidth: number }>() || { menuOpen: false, panelWidth: 0 };
 
   // View state: 'auth' | 'verify' | 'success'
   const [view, setView] = useState<'auth' | 'verify' | 'success'>('auth');
@@ -267,8 +269,15 @@ const Login = () => {
 
   return (
     <main className="w-screen min-h-dvh grid place-items-center p-6 bg-zinc-950">
-      <div className="mx-auto w-full max-w-md">
-        <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl backdrop-blur">
+      <div
+        style={{
+          transform: menuOpen ? `translateX(${panelWidth / 2}px)` : "none",
+          transition: "transform 300ms ease",
+          willChange: "transform",
+        }}
+      >
+        <div className="mx-auto w-full max-w-md">
+          <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl backdrop-blur">
           {/* Header */}
           <div className="mb-6 flex items-start gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600/15 text-emerald-400 ring-1 ring-emerald-500/30">
@@ -456,6 +465,7 @@ const Login = () => {
             </div>
           )}
         </div>
+      </div>
       </div>
     </main>
   );

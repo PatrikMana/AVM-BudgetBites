@@ -412,7 +412,7 @@ export const StaggeredMenu = ({
                             items.map((it, idx) => (
                                 <li className="sm-panel-itemWrap relative overflow-hidden leading-none" key={it.label + idx}>
                                     <a
-                                        className="sm-panel-item relative text-white font-semibold text-[4rem] cursor-pointer leading-none tracking-[-2px] uppercase transition-[background,color] duration-150 ease-linear inline-block pr-[1.4em] no-underline hover:text-emerald-500"
+                                        className="sm-panel-item relative text-white font-semibold text-[4rem] cursor-pointer leading-none tracking-[-2px] uppercase transition-all duration-300 ease-linear inline-block pr-[1.4em] no-underline hover:bg-gradient-to-r hover:from-emerald-500 hover:to-emerald-600 hover:bg-clip-text hover:text-transparent"
                                         href={it.link}
                                         aria-label={it.ariaLabel}
                                         data-index={idx + 1}
@@ -444,7 +444,7 @@ export const StaggeredMenu = ({
                                             href={s.link}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="sm-socials-link text-[1.2rem] font-medium text-[#111] dark:text-white relative inline-block py-[2px] no-underline transition-[color,opacity] duration-300 ease-linear"
+                                            className="sm-socials-link text-[1.2rem] font-medium !text-emerald-500 hover:!text-emerald-300 relative inline-block py-[2px] no-underline transition-[color] duration-200 ease-in-out"
                                         >
                                             {s.label}
                                         </a>
