@@ -135,7 +135,7 @@ const Login = () => {
       });
 
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = "/account";
       }, 800);
     } catch (error: any) {
       toast({
@@ -457,10 +457,10 @@ const Login = () => {
                 </p>
               </div>
               <button
-                onClick={() => window.location.href = "/"}
+                onClick={() => window.location.href = "/account"}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500"
               >
-                Back to Home Page
+                Go to Account
               </button>
             </div>
           )}

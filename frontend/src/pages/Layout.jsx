@@ -2,13 +2,8 @@
 import { Outlet } from "react-router-dom";
 import StaggeredMenu from "../components/StaggeredMenu.jsx";
 import cookingLogo from "../assets/Cooking.png";
-import { useState, useCallback } from "react";
-
-const menuItems = [
-    { label: "Home", ariaLabel: "Go to home page", link: "/" },
-    { label: "Generate", ariaLabel: "Learn about us", link: "/generate" },
-    { label: "Login", ariaLabel: "Log into page", link: "/login" },
-];
+import { useState, useCallback, useEffect } from "react";
+import Cookies from "js-cookie";
 
 const socialItems = [
     { label: "Twitter", link: "https://twitter.com" },
@@ -19,6 +14,26 @@ const socialItems = [
 export default function Layout() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [panelWidth, setPanelWidth] = useState(0);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    // Check login status
+    useEffect(() => {
+        const username = Cookies.get("username");
+        setIsLoggedIn(!!username);
+    }, []);
+
+    // Dynamic menu items based on login status
+    const menuItems = isLoggedIn 
+        ? [
+            { label: "Home", ariaLabel: "Go to home page", link: "/" },
+            { label: "Generate", ariaLabel: "Generate meal plans", link: "/generate" },
+            { label: "Account", ariaLabel: "View your account", link: "/account" },
+          ]
+        : [
+            { label: "Home", ariaLabel: "Go to home page", link: "/" },
+            { label: "Generate", ariaLabel: "Generate meal plans", link: "/generate" },
+            { label: "Login", ariaLabel: "Log into page", link: "/login" },
+          ];
 
     const measurePanel = useCallback(() => {
         // StaggeredMenu má <aside id="staggered-menu-panel" ...>
