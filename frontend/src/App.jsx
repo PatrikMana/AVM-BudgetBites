@@ -1,6 +1,7 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
+import Dashboard from './pages/Dashboard'
 import Generate from './pages/Generate'
 import Layout from './pages/Layout.jsx'
 import Login from "./pages/Login"
@@ -15,7 +16,12 @@ function App() {
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<Layout />}>
-                        <Route index element={<Home />} />         {/* renders at "/" */}
+                        <Route index element={<Home />} />         {/* renders at "/" - shows landing or dashboard */}
+                        <Route path="dashboard" element={
+                            <ProtectedRoute>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        } /> {/* renders at "/dashboard" - PROTECTED */}
                         <Route path="generate" element={
                             <ProtectedRoute>
                                 <Generate />
