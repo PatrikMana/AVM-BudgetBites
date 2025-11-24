@@ -63,16 +63,16 @@ export default function Home() {
     ];
 
     return (
-        <div
-            className="min-h-screen bg-zinc-950"
-            style={{
-                transform: menuOpen ? `translateX(${panelWidth / 2}px)` : "none",
-                transition: "transform 300ms ease",
-                willChange: "transform",
-            }}
-        >
-            {/* Hero Section */}
-            <section className="min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
+            <div
+                style={{
+                    transform: menuOpen ? `translateX(${panelWidth / 2}px)` : "none",
+                    transition: "transform 300ms ease",
+                    willChange: "transform",
+                }}
+            >
+                {/* Hero Section */}
+                <section className="min-h-screen flex items-center justify-center px-4 py-20">
                 <div className="max-w-4xl text-center">
                     <div className="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-full mb-6 border border-emerald-500/20">
                         <Sparkles className="h-4 w-4" />
@@ -226,6 +226,7 @@ export default function Home() {
                     </div>
                 </div>
             </footer>
+            </div>
         </div>
     );
 }

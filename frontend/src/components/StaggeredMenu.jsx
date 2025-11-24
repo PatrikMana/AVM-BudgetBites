@@ -307,8 +307,9 @@ export const StaggeredMenu = ({
             <div className="sm-toggle-wrap fixed left-4 top-4 z-[1000] pointer-events-auto">
                 <button
                     ref={toggleBtnRef}
-                    className="sm-toggle inline-flex items-center gap-[0.3rem] rounded-md border border-white/10
-                   bg-zinc-900/80 backdrop-blur-sm px-3 py-1.5 text-sm text-white shadow-lg hover:bg-zinc-800/90 transition-colors"
+                    className="sm-toggle inline-flex items-center gap-[0.3rem] rounded-md
+                   px-3 py-1.5 text-sm text-white transition-colors"
+                    style={{ outline: 'none', border: 'none', background: 'transparent', WebkitTapHighlightColor: 'transparent' }}
                     aria-label={open ? 'Close menu' : 'Open menu'}
                     aria-expanded={open}
                     aria-controls="staggered-menu-panel"

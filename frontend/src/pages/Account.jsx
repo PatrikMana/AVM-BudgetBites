@@ -53,15 +53,15 @@ const Account = () => {
     const shadowAccent = isPremium ? "amber-900/30" : "emerald-900/30";
 
     return (
-        <div
-            className="min-h-screen bg-zinc-950"
-            style={{
-                transform: menuOpen ? `translateX(${panelWidth / 2}px)` : "none",
-                transition: "transform 300ms ease",
-                willChange: "transform",
-            }}
-        >
-            <main className="px-4 py-8 md:py-12">
+        <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
+            <main 
+                className="px-4 py-8 md:py-12"
+                style={{
+                    transform: menuOpen ? `translateX(${panelWidth / 2}px)` : "none",
+                    transition: "transform 300ms ease",
+                    willChange: "transform",
+                }}
+            >
                 <div className="max-w-3xl mx-auto space-y-6">
                     {/* Profile Header */}
                     <div className={`rounded-2xl border ${isPremium ? 'border-amber-500/30 bg-gradient-to-br from-zinc-900/90 to-amber-950/20' : 'border-white/10 bg-zinc-900/80'} p-6 backdrop-blur ${isPremium ? 'shadow-xl shadow-amber-500/5' : ''}`}>

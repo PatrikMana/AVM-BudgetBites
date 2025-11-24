@@ -98,6 +98,36 @@ button:focus-visible {
     outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Remove all outlines from StaggeredMenu buttons - macOS fix */
+.sm-toggle,
+.sm-toggle:focus,
+.sm-toggle:focus-visible,
+.sm-toggle:active,
+.sm-toggle:hover {
+    outline: none !important;
+    outline-width: 0 !important;
+    outline-style: none !important;
+    outline-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Override macOS default button focus ring */
+button:focus:not(:focus-visible) {
+    outline: none !important;
+}
+
+/* Additional Safari/WebKit specific fixes */
+button::-moz-focus-inner {
+    border: 0;
+}
+
+button.sm-toggle {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
 @media (prefers-color-scheme: light) {
     :root {
         color: #213547;

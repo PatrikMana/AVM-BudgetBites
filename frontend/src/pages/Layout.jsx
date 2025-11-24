@@ -35,12 +35,12 @@ export default function Layout() {
     // Dynamic menu items based on login status
     const menuItems = isLoggedIn 
         ? [
-            { label: "Home", ariaLabel: "Go to home page", link: "/" },
+            { label: "Home", ariaLabel: "Go to dashboard", link: "/dashboard" },
             { label: "Generate", ariaLabel: "Generate meal plans", link: "/generate" },
             { label: "Account", ariaLabel: "View your account", link: "/account" },
           ]
         : [
-            { label: "Home", ariaLabel: "Go to home page", link: "/" },
+            { label: "About", ariaLabel: "About BudgetBites", link: "/" },
             { label: "Generate", ariaLabel: "Generate meal plans", link: "/generate" },
             { label: "Login", ariaLabel: "Log into page", link: "/login" },
           ];
