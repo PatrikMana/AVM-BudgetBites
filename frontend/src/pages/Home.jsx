@@ -3,13 +3,14 @@ import { Link, Navigate } from "react-router-dom";
 import { Sparkles, TrendingDown, BookOpen, ArrowRight, Check } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 import Cookies from "js-cookie";
+import { isAuthenticated } from "../lib/auth";
 
 export default function Home() {
     const { menuOpen, panelWidth } = useOutletContext() || { menuOpen: false, panelWidth: 0 };
     
     // If user is logged in, redirect to dashboard
-    const username = Cookies.get("username");
-    if (username) {
+    const authenticated = isAuthenticated();
+    if (authenticated) {
         return <Navigate to="/dashboard" replace />;
     }
 
