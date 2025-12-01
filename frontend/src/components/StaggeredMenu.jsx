@@ -412,9 +412,10 @@ export const StaggeredMenu = ({
             <aside
                 id="staggered-menu-panel"
                 ref={panelRef}
-                className="staggered-menu-panel fixed top-0 h-dvh w-[320px] sm:w-[360px] lg:w-[400px]
+                className="staggered-menu-panel fixed top-0 h-dvh w-full sm:w-[360px] lg:w-[400px]
                    bg-zinc-950 text-white
-                   p-[6em_2em_2em_2em] overflow-y-auto z-50 backdrop-blur-[12px]"
+                   p-[4em_1.5em_2em_1.5em] sm:p-[6em_2em_2em_2em] overflow-y-auto z-50 backdrop-blur-[12px]
+                   flex flex-col"
                 style={{
                     WebkitBackdropFilter: 'blur(12px)',
                     [position === 'left' ? 'left' : 'right']: 0,
@@ -473,14 +474,14 @@ export const StaggeredMenu = ({
                             </ul>
                         </div>
                     )}
-                    
-                    {/* User Profile Section */}
-                    {showUserProfile && (
-                        <div className="mt-4">
-                            <UserProfile onClick={onUserProfileClick} />
-                        </div>
-                    )}
                 </div>
+
+                {/* User Profile Section - fixed at absolute bottom */}
+                {showUserProfile && (
+                    <div className="user-profile border-t border-white/10 pt-4 pb-4 mt-4">
+                        <UserProfile onClick={onUserProfileClick} />
+                    </div>
+                )}
             </aside>
 
             {/* --- 5) Lokální styly (zjednodušeno) --- */}
@@ -529,3 +530,4 @@ export const StaggeredMenu = ({
 };
 
 export default StaggeredMenu;
+
