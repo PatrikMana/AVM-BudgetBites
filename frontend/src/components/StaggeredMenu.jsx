@@ -1,5 +1,6 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import UserProfile from './UserProfile.jsx';
 
 export const StaggeredMenu = ({
                                   position = 'right',
@@ -16,7 +17,9 @@ export const StaggeredMenu = ({
                                   isFixed = false,
                                   accentColor = '#5227FF',
                                   onMenuOpen,
-                                  onMenuClose
+                                  onMenuClose,
+                                  showUserProfile = false,
+                                  onUserProfileClick
                               }) => {
     const [open, setOpen] = useState(false);
     const openRef = useRef(false);
@@ -92,6 +95,7 @@ export const StaggeredMenu = ({
         const numberEls = Array.from(panel.querySelectorAll('.sm-panel-list[data-numbering] .sm-panel-item'));
         const socialTitle = panel.querySelector('.sm-socials-title');
         const socialLinks = Array.from(panel.querySelectorAll('.sm-socials-link'));
+        const userProfile = panel.querySelector('.user-profile');
 
         const layerStates = layers.map(el => ({ el, start: Number(gsap.getProperty(el, 'xPercent')) }));
         const panelStart = Number(gsap.getProperty(panel, 'xPercent'));
@@ -100,6 +104,7 @@ export const StaggeredMenu = ({
         if (numberEls.length) gsap.set(numberEls, { ['--sm-num-opacity']: 0 });
         if (socialTitle) gsap.set(socialTitle, { opacity: 0 });
         if (socialLinks.length) gsap.set(socialLinks, { y: 25, opacity: 0 });
+        if (userProfile) gsap.set(userProfile, { y: 25, opacity: 0 });
 
         const tl = gsap.timeline({ paused: true });
 
@@ -137,7 +142,7 @@ export const StaggeredMenu = ({
             }
         }
 
-        if (socialTitle || socialLinks.length) {
+        if (socialTitle || socialLinks.length || userProfile) {
             const socialsStart = panelInsertTime + panelDuration * 0.4;
 
             if (socialTitle) tl.to(socialTitle, { opacity: 1, duration: 0.5, ease: 'power2.out' }, socialsStart);
@@ -153,6 +158,18 @@ export const StaggeredMenu = ({
                         onComplete: () => gsap.set(socialLinks, { clearProps: 'opacity' })
                     },
                     socialsStart + 0.04
+                );
+            }
+            if (userProfile) {
+                tl.to(
+                    userProfile,
+                    {
+                        y: 0,
+                        opacity: 1,
+                        duration: 0.55,
+                        ease: 'power3.out'
+                    },
+                    socialsStart + 0.12
                 );
             }
         }
@@ -201,8 +218,10 @@ export const StaggeredMenu = ({
 
                 const socialTitle = panel.querySelector('.sm-socials-title');
                 const socialLinks = Array.from(panel.querySelectorAll('.sm-socials-link'));
+                const userProfile = panel.querySelector('.user-profile');
                 if (socialTitle) gsap.set(socialTitle, { opacity: 0 });
                 if (socialLinks.length) gsap.set(socialLinks, { y: 25, opacity: 0 });
+                if (userProfile) gsap.set(userProfile, { y: 25, opacity: 0 });
 
                 busyRef.current = false;
             }
@@ -452,6 +471,13 @@ export const StaggeredMenu = ({
                                     </li>
                                 ))}
                             </ul>
+                        </div>
+                    )}
+                    
+                    {/* User Profile Section */}
+                    {showUserProfile && (
+                        <div className="mt-4">
+                            <UserProfile onClick={onUserProfileClick} />
                         </div>
                     )}
                 </div>
