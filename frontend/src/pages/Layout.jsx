@@ -4,6 +4,7 @@ import StaggeredMenu from "../components/StaggeredMenu.jsx";
 import cookingLogo from "../assets/Cooking.png";
 import { useState, useCallback, useEffect } from "react";
 import Cookies from "js-cookie";
+import { isAuthenticated } from "../lib/auth";
 
 const socialItems = [
     { label: "Twitter", link: "https://twitter.com" },
@@ -19,14 +20,14 @@ export default function Layout() {
     // Check login status and poll for changes
     useEffect(() => {
         const checkLoginStatus = () => {
-            const username = Cookies.get("username");
-            setIsLoggedIn(!!username);
+            const authenticated = isAuthenticated();
+            setIsLoggedIn(authenticated);
         };
 
         // Check immediately
         checkLoginStatus();
 
-        // Check every 500ms for cookie changes (login/logout)
+        // Check every 500ms for auth changes (login/logout/token expiry)
         const interval = setInterval(checkLoginStatus, 500);
 
         return () => clearInterval(interval);

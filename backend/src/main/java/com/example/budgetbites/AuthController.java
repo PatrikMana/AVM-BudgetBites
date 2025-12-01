@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 // přidány importy pro logování
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/auth")
@@ -18,10 +19,14 @@ public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
+    private JwtService jwtService;
+
+    @Autowired
     private AuthService authService;
 
     @Autowired
     private UserRepository userRepository;
+
 
     // Nový endpoint pro registraci s emailem
     @PostMapping("/register")
@@ -52,10 +57,20 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest request) {
-        boolean success = authService.login(request.getUsername(), request.getPassword());
-        return success ? ResponseEntity.ok("Přihlášení úspěšné") :
-                ResponseEntity.status(401).body("Špatné údaje");
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        try {
+            boolean success = authService.login(request.getUsername(), request.getPassword());
+            if (!success) {
+                return ResponseEntity.status(401).body("Špatné údaje");
+            }
+
+            String token = jwtService.generateToken(request.getUsername());
+            return ResponseEntity.ok(new JwtResponse(token));
+
+        } catch (ResponseStatusException ex) {
+            // typicky 403, když není ověřený email
+            return ResponseEntity.status(ex.getStatusCode()).body(ex.getReason());
+        }
     }
 
     @GetMapping("/users")

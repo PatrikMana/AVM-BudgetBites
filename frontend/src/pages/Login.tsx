@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { useToast } from "../hooks/use-toast";
 import { useOutletContext } from "react-router-dom";
 import Cookies from "js-cookie";
+import { login, logout, isAuthenticated, getUserData } from "../lib/auth";
 // @ts-ignore
 import heroImage from "../assets/react.svg";
 import { UtensilsCrossed, CheckCircle, Eye, EyeOff } from "lucide-react";
@@ -104,10 +105,11 @@ const Login = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if user already has a token
-  const token = Cookies.get("auth_token");
-  if (token) {
-    console.log("User is logged in:", token);
+  // Check if user already has a valid token
+  const isLoggedIn = isAuthenticated();
+  if (isLoggedIn) {
+    const userData = getUserData();
+    console.log("User is logged in:", userData);
   }
 
   // Login handler
@@ -116,53 +118,17 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Call the correct backend endpoint
-      const response = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          username: loginUsername, 
-          password: loginPassword 
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Invalid credentials");
-      }
-
-      // Backend currently returns plain text, so handle that
-      const successMessage = await response.text();
-      console.log("Login response:", successMessage);
-
-      // For now, create a mock token since backend doesn't return JWT yet
-      // TODO: Remove this when backend implements JWT
-      const mockToken = btoa(`${loginUsername}:${Date.now()}`);
-      Cookies.set("auth_token", mockToken, {
-        expires: 7, // 7 days
-        secure: false,
-        sameSite: "Strict",
-      });
+      // Use the auth utility for login
+      const result = await login(loginUsername, loginPassword);
       
-      // Store username and email for session persistence
-      Cookies.set("username", loginUsername, {
-        expires: 7, // 7 days
-        secure: false,
-        sameSite: "Strict",
-      });
-      
-      // Store a fake email for now (backend doesn't return it)
-      Cookies.set("email", `${loginUsername}@budgetbites.com`, {
-        expires: 7, // 7 days
-        secure: false,
-        sameSite: "Strict",
-      });
+      console.log("Login successful:", result);
 
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
 
+      // Redirect after successful login
       setTimeout(() => {
         window.location.href = "/account";
       }, 800);
@@ -257,39 +223,13 @@ const Login = () => {
       const message = await response.text();
 
       // Auto-login after verification
-      const loginResponse = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          username: signupUsername, 
-          password: signupPassword 
-        }),
-      });
-
-      if (loginResponse.ok) {
-        const mockToken = btoa(`${signupUsername}:${Date.now()}`);
-        Cookies.set("auth_token", mockToken, {
-          expires: 7, // 7 days
-          secure: false,
-          sameSite: "Strict",
-        });
+      try {
+        const loginResult = await login(signupUsername, signupPassword);
         
-        // Store username and email for session persistence
-        Cookies.set("username", signupUsername, {
-          expires: 7, // 7 days
-          secure: false,
-          sameSite: "Strict",
-        });
-        
-        Cookies.set("email", signupEmail, {
-          expires: 7, // 7 days
-          secure: false,
-          sameSite: "Strict",
-        });
-
         setSuccessMessage("Registration successful! You are now logged in.");
         setView('success');
-      } else {
+      } catch (loginError) {
+        console.warn("Auto-login failed after verification:", loginError);
         setSuccessMessage("Email verified successfully! Please login.");
         setView('success');
       }
@@ -305,8 +245,7 @@ const Login = () => {
   };
 
   const handleLogout = () => {
-    Cookies.remove("auth_token");
-    window.location.href = "/login";
+    logout(true);
   };
 
   return (

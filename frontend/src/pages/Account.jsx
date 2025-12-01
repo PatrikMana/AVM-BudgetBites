@@ -3,15 +3,17 @@ import { User, Mail, Crown, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
+import { getUserData, logout } from "../lib/auth";
 
 const Account = () => {
     const { menuOpen, panelWidth } = useOutletContext() || { menuOpen: false, panelWidth: 0 };
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
 
-    // Get user data from cookies
-    const username = Cookies.get("username") || "Guest";
-    const email = Cookies.get("email") || "guest@example.com";
+    // Get user data from auth utility
+    const userData = getUserData();
+    const username = userData.username || "Guest";
+    const email = userData.email || "guest@example.com";
     const [userPlan, setUserPlan] = useState(Cookies.get("plan") || "free");
 
     const user = {
@@ -32,9 +34,7 @@ const Account = () => {
     };
 
     const handleLogout = () => {
-        Cookies.remove("username");
-        Cookies.remove("email");
-        Cookies.remove("authToken");
+        logout(false); // Don't auto-redirect
         navigate("/login");
     };
 
