@@ -61,7 +61,7 @@ const UserProfile = ({ onClick, className = '' }) => {
                 {/* Logout Button */}
                 <button
                     onClick={handleLogout}
-                    className="flex-shrink-0 p-2 transition-colors duration-200 text-zinc-400 hover:text-red-400"
+                    className="flex-shrink-0 p-2 rounded-full hover:bg-red-500/20 transition-colors duration-200 text-zinc-400 hover:text-red-400"
                     aria-label="Logout"
                     title="Logout"
                 >
