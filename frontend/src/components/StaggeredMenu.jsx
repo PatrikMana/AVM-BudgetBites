@@ -433,7 +433,7 @@ export const StaggeredMenu = ({
                             items.map((it, idx) => (
                                 <li className="sm-panel-itemWrap relative overflow-hidden leading-none" key={it.label + idx}>
                                     <a
-                                        className="sm-panel-item relative text-white font-semibold text-[4rem] cursor-pointer leading-none tracking-[-2px] uppercase transition-all duration-300 ease-linear inline-block pr-[1.4em] no-underline hover:bg-gradient-to-r hover:from-emerald-500 hover:to-emerald-600 hover:bg-clip-text hover:text-transparent"
+                                        className="sm-panel-item relative text-white font-semibold text-[4rem] cursor-pointer leading-none tracking-[-2px] uppercase transition-all duration-300 ease-linear inline-block no-underline hover:bg-gradient-to-r hover:from-emerald-500 hover:to-emerald-600 hover:bg-clip-text hover:text-transparent"
                                         href={it.link}
                                         aria-label={it.ariaLabel}
                                         data-index={idx + 1}
@@ -489,7 +489,6 @@ export const StaggeredMenu = ({
 .sm-scope .sm-icon { position:relative; width:14px; height:14px; display:inline-flex; align-items:center; justify-content:center; will-change:transform; }
 .sm-scope .sm-icon-line { position:absolute; left:50%; top:50%; width:100%; height:2px; background:currentColor; border-radius:2px; transform:translate(-50%, -50%); will-change:transform; }
 
-/* panelové seznamy atd. */
 .sm-scope .sm-panel-itemWrap { position:relative; overflow:hidden; line-height:1; }
 .sm-scope .sm-panel-inner { flex:1; display:flex; flex-direction:column; gap:1.25rem; }
 .sm-scope .sm-prelayers { width:clamp(260px,38vw,420px); }
@@ -499,22 +498,34 @@ export const StaggeredMenu = ({
 .sm-scope .sm-socials-title { margin:0; font-size:1rem; font-weight:500; color:#10b981; }
 .sm-scope .sm-socials-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:row; align-items:center; gap:1rem; flex-wrap:wrap; }
 .sm-scope .sm-socials-list .sm-socials-link { opacity:1; transition:opacity .3s ease; }
-.sm-scope .sm-socials-list:hover .sm-socials-link:not(:hover) { opacity:.35; }
-.sm-scope .sm-socials-list:focus-within .sm-socials-link:not(:focus-visible) { opacity:.35; }
+.sm-scope .sm-socials-list:has(.sm-socials-link:hover) .sm-socials-link:not(:hover) { opacity:.35; }
+.sm-scope .sm-socials-list:has(.sm-socials-link:focus-visible) .sm-socials-link:not(:focus-visible) { opacity:.35; }
 .sm-scope .sm-socials-link:hover,
 .sm-scope .sm-socials-link:focus-visible { opacity:1; }
 
-.sm-scope .sm-panel-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem; }
-.sm-scope .sm-panel-item { position:relative; color:#fff; font-weight:600; font-size:4rem; cursor-pointer; line-height:1; letter-spacing:-2px; text-transform:uppercase; transition:background .25s, color .25s; display:inline-block; text-decoration:none; padding-right:1.4em; }
+.sm-scope .sm-panel-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem; counter-reset: smItem; }
+.sm-scope .sm-panel-item { 
+  position:relative; 
+  color:#fff; 
+  font-weight:600; 
+  font-size:4rem; 
+  cursor:pointer; 
+  line-height:1; 
+  letter-spacing:-2px; 
+  text-transform:uppercase; 
+  transition:background .25s, color .25s; 
+  display:inline-block; 
+  text-decoration:none; 
+}
 .sm-scope .sm-panel-itemLabel { display:inline-block; will-change:transform; transform-origin:50% 100%; }
 .sm-scope .sm-panel-item:hover { color:#10b981; }
-.sm-scope .sm-panel-list[data-numbering] { counter-reset: smItem; }
+
 .sm-scope .sm-panel-list[data-numbering] .sm-panel-item::after {
   counter-increment: smItem;
   content: counter(smItem, decimal-leading-zero);
   position: absolute;
   top: .1em;
-  right: 3.2em;
+  right: -1.4em;
   font-size: 18px;
   font-weight: 400;
   color: #10b981;
@@ -523,7 +534,9 @@ export const StaggeredMenu = ({
   user-select: none;
   opacity: var(--sm-num-opacity, 0);
 }
+
 @media (max-width:1024px) { .sm-scope .staggered-menu-header { padding:.75rem; } }
+
       `}</style>
         </div>
     );
