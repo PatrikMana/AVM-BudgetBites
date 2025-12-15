@@ -1,9 +1,10 @@
 // src/pages/Layout.jsx
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import StaggeredMenu from "../components/StaggeredMenu.jsx";
 import cookingLogo from "../assets/Cooking.png";
 import { useState, useCallback, useEffect } from "react";
 import Cookies from "js-cookie";
+import { isAuthenticated } from "../lib/auth";
 
 const socialItems = [
     { label: "Twitter", link: "https://twitter.com" },
@@ -12,25 +13,41 @@ const socialItems = [
 ];
 
 export default function Layout() {
+    const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
     const [panelWidth, setPanelWidth] = useState(0);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    // Check login status
+    // Handle user profile click
+    const handleUserProfileClick = () => {
+        navigate('/account');
+    };
+
+    // Check login status and poll for changes
     useEffect(() => {
-        const username = Cookies.get("username");
-        setIsLoggedIn(!!username);
+        const checkLoginStatus = () => {
+            const authenticated = isAuthenticated();
+            setIsLoggedIn(authenticated);
+        };
+
+        // Check immediately
+        checkLoginStatus();
+
+        // Check every 500ms for auth changes (login/logout/token expiry)
+        const interval = setInterval(checkLoginStatus, 500);
+
+        return () => clearInterval(interval);
     }, []);
 
     // Dynamic menu items based on login status
     const menuItems = isLoggedIn 
         ? [
-            { label: "Home", ariaLabel: "Go to home page", link: "/" },
+            { label: "Home", ariaLabel: "Go to dashboard", link: "/dashboard" },
             { label: "Generate", ariaLabel: "Generate meal plans", link: "/generate" },
             { label: "Account", ariaLabel: "View your account", link: "/account" },
           ]
         : [
-            { label: "Home", ariaLabel: "Go to home page", link: "/" },
+            { label: "About", ariaLabel: "About BudgetBites", link: "/" },
             { label: "Generate", ariaLabel: "Generate meal plans", link: "/generate" },
             { label: "Login", ariaLabel: "Log into page", link: "/login" },
           ];
@@ -45,6 +62,7 @@ export default function Layout() {
         <>
             {/* FIXED overlay menu – nezabírá žádné místo v layoutu */}
             <StaggeredMenu
+                key={isLoggedIn ? 'logged-in' : 'logged-out'}
                 isFixed
                 position="left"
                 items={menuItems}
@@ -57,6 +75,8 @@ export default function Layout() {
                 colors={["#10b981", "#059669"]}
                 logoUrl={cookingLogo}
                 accentColor="#10b981"
+                showUserProfile={isLoggedIn}
+                onUserProfileClick={handleUserProfileClick}
                 onMenuOpen={() => {
                     setMenuOpen(true);
                     // po otevření změř šířku panelu (pro vizuální vystředění obsahu napravo)

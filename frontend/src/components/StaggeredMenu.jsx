@@ -1,5 +1,6 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import UserProfile from './UserProfile.jsx';
 
 export const StaggeredMenu = ({
                                   position = 'right',
@@ -16,7 +17,9 @@ export const StaggeredMenu = ({
                                   isFixed = false,
                                   accentColor = '#5227FF',
                                   onMenuOpen,
-                                  onMenuClose
+                                  onMenuClose,
+                                  showUserProfile = false,
+                                  onUserProfileClick
                               }) => {
     const [open, setOpen] = useState(false);
     const openRef = useRef(false);
@@ -92,6 +95,7 @@ export const StaggeredMenu = ({
         const numberEls = Array.from(panel.querySelectorAll('.sm-panel-list[data-numbering] .sm-panel-item'));
         const socialTitle = panel.querySelector('.sm-socials-title');
         const socialLinks = Array.from(panel.querySelectorAll('.sm-socials-link'));
+        const userProfile = panel.querySelector('.user-profile');
 
         const layerStates = layers.map(el => ({ el, start: Number(gsap.getProperty(el, 'xPercent')) }));
         const panelStart = Number(gsap.getProperty(panel, 'xPercent'));
@@ -100,6 +104,7 @@ export const StaggeredMenu = ({
         if (numberEls.length) gsap.set(numberEls, { ['--sm-num-opacity']: 0 });
         if (socialTitle) gsap.set(socialTitle, { opacity: 0 });
         if (socialLinks.length) gsap.set(socialLinks, { y: 25, opacity: 0 });
+        if (userProfile) gsap.set(userProfile, { y: 25, opacity: 0 });
 
         const tl = gsap.timeline({ paused: true });
 
@@ -137,7 +142,7 @@ export const StaggeredMenu = ({
             }
         }
 
-        if (socialTitle || socialLinks.length) {
+        if (socialTitle || socialLinks.length || userProfile) {
             const socialsStart = panelInsertTime + panelDuration * 0.4;
 
             if (socialTitle) tl.to(socialTitle, { opacity: 1, duration: 0.5, ease: 'power2.out' }, socialsStart);
@@ -153,6 +158,18 @@ export const StaggeredMenu = ({
                         onComplete: () => gsap.set(socialLinks, { clearProps: 'opacity' })
                     },
                     socialsStart + 0.04
+                );
+            }
+            if (userProfile) {
+                tl.to(
+                    userProfile,
+                    {
+                        y: 0,
+                        opacity: 1,
+                        duration: 0.55,
+                        ease: 'power3.out'
+                    },
+                    socialsStart + 0.12
                 );
             }
         }
@@ -201,8 +218,10 @@ export const StaggeredMenu = ({
 
                 const socialTitle = panel.querySelector('.sm-socials-title');
                 const socialLinks = Array.from(panel.querySelectorAll('.sm-socials-link'));
+                const userProfile = panel.querySelector('.user-profile');
                 if (socialTitle) gsap.set(socialTitle, { opacity: 0 });
                 if (socialLinks.length) gsap.set(socialLinks, { y: 25, opacity: 0 });
+                if (userProfile) gsap.set(userProfile, { y: 25, opacity: 0 });
 
                 busyRef.current = false;
             }
@@ -307,8 +326,9 @@ export const StaggeredMenu = ({
             <div className="sm-toggle-wrap fixed left-4 top-4 z-[1000] pointer-events-auto">
                 <button
                     ref={toggleBtnRef}
-                    className="sm-toggle inline-flex items-center gap-[0.3rem] rounded-md border border-white/10
-                   bg-zinc-900/80 backdrop-blur-sm px-3 py-1.5 text-sm text-white shadow-lg hover:bg-zinc-800/90 transition-colors"
+                    className="sm-toggle inline-flex items-center gap-[0.3rem] rounded-md
+                   px-3 py-1.5 text-sm text-white transition-colors"
+                    style={{ outline: 'none', border: 'none', background: 'transparent', WebkitTapHighlightColor: 'transparent' }}
                     aria-label={open ? 'Close menu' : 'Open menu'}
                     aria-expanded={open}
                     aria-controls="staggered-menu-panel"
@@ -392,9 +412,10 @@ export const StaggeredMenu = ({
             <aside
                 id="staggered-menu-panel"
                 ref={panelRef}
-                className="staggered-menu-panel fixed top-0 h-dvh w-[320px] sm:w-[360px] lg:w-[400px]
+                className="staggered-menu-panel fixed top-0 h-dvh w-full sm:w-[360px] lg:w-[400px]
                    bg-zinc-950 text-white
-                   p-[6em_2em_2em_2em] overflow-y-auto z-50 backdrop-blur-[12px]"
+                   p-[4em_1.5em_2em_1.5em] sm:p-[6em_2em_2em_2em] overflow-y-auto z-50 backdrop-blur-[12px]
+                   flex flex-col"
                 style={{
                     WebkitBackdropFilter: 'blur(12px)',
                     [position === 'left' ? 'left' : 'right']: 0,
@@ -412,7 +433,7 @@ export const StaggeredMenu = ({
                             items.map((it, idx) => (
                                 <li className="sm-panel-itemWrap relative overflow-hidden leading-none" key={it.label + idx}>
                                     <a
-                                        className="sm-panel-item relative text-white font-semibold text-[4rem] cursor-pointer leading-none tracking-[-2px] uppercase transition-all duration-300 ease-linear inline-block pr-[1.4em] no-underline hover:bg-gradient-to-r hover:from-emerald-500 hover:to-emerald-600 hover:bg-clip-text hover:text-transparent"
+                                        className="sm-panel-item relative text-white font-semibold text-[4rem] cursor-pointer leading-none tracking-[-2px] uppercase transition-all duration-300 ease-linear inline-block no-underline hover:bg-gradient-to-r hover:from-emerald-500 hover:to-emerald-600 hover:bg-clip-text hover:text-transparent"
                                         href={it.link}
                                         aria-label={it.ariaLabel}
                                         data-index={idx + 1}
@@ -454,6 +475,13 @@ export const StaggeredMenu = ({
                         </div>
                     )}
                 </div>
+
+                {/* User Profile Section - fixed at absolute bottom */}
+                {showUserProfile && (
+                    <div className="user-profile border-t border-white/10 pt-4 pb-4 mt-4">
+                        <UserProfile onClick={onUserProfileClick} />
+                    </div>
+                )}
             </aside>
 
             {/* --- 5) Lokální styly (zjednodušeno) --- */}
@@ -461,7 +489,6 @@ export const StaggeredMenu = ({
 .sm-scope .sm-icon { position:relative; width:14px; height:14px; display:inline-flex; align-items:center; justify-content:center; will-change:transform; }
 .sm-scope .sm-icon-line { position:absolute; left:50%; top:50%; width:100%; height:2px; background:currentColor; border-radius:2px; transform:translate(-50%, -50%); will-change:transform; }
 
-/* panelové seznamy atd. */
 .sm-scope .sm-panel-itemWrap { position:relative; overflow:hidden; line-height:1; }
 .sm-scope .sm-panel-inner { flex:1; display:flex; flex-direction:column; gap:1.25rem; }
 .sm-scope .sm-prelayers { width:clamp(260px,38vw,420px); }
@@ -471,22 +498,34 @@ export const StaggeredMenu = ({
 .sm-scope .sm-socials-title { margin:0; font-size:1rem; font-weight:500; color:#10b981; }
 .sm-scope .sm-socials-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:row; align-items:center; gap:1rem; flex-wrap:wrap; }
 .sm-scope .sm-socials-list .sm-socials-link { opacity:1; transition:opacity .3s ease; }
-.sm-scope .sm-socials-list:hover .sm-socials-link:not(:hover) { opacity:.35; }
-.sm-scope .sm-socials-list:focus-within .sm-socials-link:not(:focus-visible) { opacity:.35; }
+.sm-scope .sm-socials-list:has(.sm-socials-link:hover) .sm-socials-link:not(:hover) { opacity:.35; }
+.sm-scope .sm-socials-list:has(.sm-socials-link:focus-visible) .sm-socials-link:not(:focus-visible) { opacity:.35; }
 .sm-scope .sm-socials-link:hover,
 .sm-scope .sm-socials-link:focus-visible { opacity:1; }
 
-.sm-scope .sm-panel-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem; }
-.sm-scope .sm-panel-item { position:relative; color:#fff; font-weight:600; font-size:4rem; cursor-pointer; line-height:1; letter-spacing:-2px; text-transform:uppercase; transition:background .25s, color .25s; display:inline-block; text-decoration:none; padding-right:1.4em; }
+.sm-scope .sm-panel-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5rem; counter-reset: smItem; }
+.sm-scope .sm-panel-item { 
+  position:relative; 
+  color:#fff; 
+  font-weight:600; 
+  font-size:4rem; 
+  cursor:pointer; 
+  line-height:1; 
+  letter-spacing:-2px; 
+  text-transform:uppercase; 
+  transition:background .25s, color .25s; 
+  display:inline-block; 
+  text-decoration:none; 
+}
 .sm-scope .sm-panel-itemLabel { display:inline-block; will-change:transform; transform-origin:50% 100%; }
 .sm-scope .sm-panel-item:hover { color:#10b981; }
-.sm-scope .sm-panel-list[data-numbering] { counter-reset: smItem; }
+
 .sm-scope .sm-panel-list[data-numbering] .sm-panel-item::after {
   counter-increment: smItem;
   content: counter(smItem, decimal-leading-zero);
   position: absolute;
   top: .1em;
-  right: 3.2em;
+  right: -1.4em;
   font-size: 18px;
   font-weight: 400;
   color: #10b981;
@@ -495,10 +534,13 @@ export const StaggeredMenu = ({
   user-select: none;
   opacity: var(--sm-num-opacity, 0);
 }
+
 @media (max-width:1024px) { .sm-scope .staggered-menu-header { padding:.75rem; } }
+
       `}</style>
         </div>
     );
 };
 
 export default StaggeredMenu;
+

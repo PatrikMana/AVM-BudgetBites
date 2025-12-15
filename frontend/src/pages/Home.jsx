@@ -1,10 +1,18 @@
 // src/pages/Home.jsx
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Sparkles, TrendingDown, BookOpen, ArrowRight, Check } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
+import Cookies from "js-cookie";
+import { isAuthenticated } from "../lib/auth";
 
 export default function Home() {
     const { menuOpen, panelWidth } = useOutletContext() || { menuOpen: false, panelWidth: 0 };
+    
+    // If user is logged in, redirect to dashboard
+    const authenticated = isAuthenticated();
+    if (authenticated) {
+        return <Navigate to="/dashboard" replace />;
+    }
 
     const features = [
         {
@@ -56,16 +64,16 @@ export default function Home() {
     ];
 
     return (
-        <div
-            className="min-h-screen bg-zinc-950"
-            style={{
-                transform: menuOpen ? `translateX(${panelWidth / 2}px)` : "none",
-                transition: "transform 300ms ease",
-                willChange: "transform",
-            }}
-        >
-            {/* Hero Section */}
-            <section className="min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
+            <div
+                style={{
+                    transform: menuOpen ? `translateX(${panelWidth / 2}px)` : "none",
+                    transition: "transform 300ms ease",
+                    willChange: "transform",
+                }}
+            >
+                {/* Hero Section */}
+                <section className="min-h-screen flex items-center justify-center px-4 py-20">
                 <div className="max-w-4xl text-center">
                     <div className="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-full mb-6 border border-emerald-500/20">
                         <Sparkles className="h-4 w-4" />
@@ -219,6 +227,7 @@ export default function Home() {
                     </div>
                 </div>
             </footer>
+            </div>
         </div>
     );
 }

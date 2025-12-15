@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { useToast } from "../hooks/use-toast";
 import { useOutletContext } from "react-router-dom";
 import Cookies from "js-cookie";
+import { login, logout, isAuthenticated, getUserData } from "../lib/auth";
 // @ts-ignore
 import heroImage from "../assets/react.svg";
-import { UtensilsCrossed, CheckCircle } from "lucide-react";
+import { UtensilsCrossed, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 
 /**
@@ -73,15 +74,30 @@ const Login = () => {
   const [view, setView] = useState<'auth' | 'verify' | 'success'>('auth');
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Show message if redirected from protected route
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('redirect') === 'protected') {
+      toast({
+        title: "Login Required",
+        description: "Please log in to access this page.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
   // Login state
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Signup state
   const [signupUsername, setSignupUsername] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
 
   // Verification state
   const [verificationCode, setVerificationCode] = useState("");
@@ -89,10 +105,11 @@ const Login = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if user already has a token
-  const token = Cookies.get("auth_token");
-  if (token) {
-    console.log("User is logged in:", token);
+  // Check if user already has a valid token
+  const isLoggedIn = isAuthenticated();
+  if (isLoggedIn) {
+    const userData = getUserData();
+    console.log("User is logged in:", userData);
   }
 
   // Login handler
@@ -101,39 +118,17 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Call the correct backend endpoint
-      const response = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          username: loginUsername, 
-          password: loginPassword 
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Invalid credentials");
-      }
-
-      // Backend currently returns plain text, so handle that
-      const successMessage = await response.text();
-      console.log("Login response:", successMessage);
-
-      // For now, create a mock token since backend doesn't return JWT yet
-      // TODO: Remove this when backend implements JWT
-      const mockToken = btoa(`${loginUsername}:${Date.now()}`);
-      Cookies.set("auth_token", mockToken, {
-        expires: 1,
-        secure: false,
-        sameSite: "Strict",
-      });
+      // Use the auth utility for login
+      const result = await login(loginUsername, loginPassword);
+      
+      console.log("Login successful:", result);
 
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in.",
       });
 
+      // Redirect after successful login
       setTimeout(() => {
         window.location.href = "/account";
       }, 800);
@@ -228,26 +223,13 @@ const Login = () => {
       const message = await response.text();
 
       // Auto-login after verification
-      const loginResponse = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          username: signupUsername, 
-          password: signupPassword 
-        }),
-      });
-
-      if (loginResponse.ok) {
-        const mockToken = btoa(`${signupUsername}:${Date.now()}`);
-        Cookies.set("auth_token", mockToken, {
-          expires: 1,
-          secure: false,
-          sameSite: "Strict",
-        });
-
+      try {
+        const loginResult = await login(signupUsername, signupPassword);
+        
         setSuccessMessage("Registration successful! You are now logged in.");
         setView('success');
-      } else {
+      } catch (loginError) {
+        console.warn("Auto-login failed after verification:", loginError);
         setSuccessMessage("Email verified successfully! Please login.");
         setView('success');
       }
@@ -263,8 +245,7 @@ const Login = () => {
   };
 
   const handleLogout = () => {
-    Cookies.remove("auth_token");
-    window.location.href = "/login";
+    logout(true);
   };
 
   return (
@@ -333,15 +314,30 @@ const Login = () => {
                 </label>
                 <label className="block">
                   <div className="mb-1 text-sm font-medium text-zinc-300">Password</div>
-                  <input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                  <div className="relative">
+                    <input
+                      id="login-password"
+                      type={showLoginPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      required
+                      className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 pr-12 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
+                      style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}
+                      aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                    >
+                      {showLoginPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
                 </label>
                 <button
                   type="submit"
@@ -382,27 +378,57 @@ const Login = () => {
                 </label>
                 <label className="block">
                   <div className="mb-1 text-sm font-medium text-zinc-300">Password</div>
-                  <input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                  <div className="relative">
+                    <input
+                      id="signup-password"
+                      type={showSignupPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      required
+                      className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 pr-12 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupPassword(!showSignupPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
+                      style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}
+                      aria-label={showSignupPassword ? "Hide password" : "Show password"}
+                    >
+                      {showSignupPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
                 </label>
                 <label className="block">
                   <div className="mb-1 text-sm font-medium text-zinc-300">Confirm Password</div>
-                  <input
-                    id="signup-confirm"
-                    type="password"
-                    placeholder="••••••••"
-                    value={signupConfirmPassword}
-                    onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                  <div className="relative">
+                    <input
+                      id="signup-confirm"
+                      type={showSignupConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={signupConfirmPassword}
+                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                      required
+                      className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 pr-12 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupConfirmPassword(!showSignupConfirmPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
+                      style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}
+                      aria-label={showSignupConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showSignupConfirmPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
                 </label>
                 <button
                   type="submit"
@@ -472,3 +498,4 @@ const Login = () => {
 };
 
 export default Login;
+
