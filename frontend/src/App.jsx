@@ -8,6 +8,7 @@ import Login from "./pages/Login"
 import Account from "./pages/Account"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { Toaster } from "./components/ui/toaster"
+import NotFound from './pages/NotFound'
 
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
                                 <Account />
                             </ProtectedRoute>
                         } /> {/* renders at "/account" - PROTECTED */}
+                        <Route path="*" element={<NotFound />} />
                     </Route>
                 </Routes>
             </BrowserRouter>
