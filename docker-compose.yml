@@ -21,7 +21,7 @@ services:
       - budgetbites
     restart: unless-stopped
 
-<<<<<<< Updated upstream
+#<<<<<<< Updated upstream
 #  maildev:
 #    image: maildev/maildev
 #    container_name: budgetbites-maildev
@@ -29,7 +29,7 @@ services:
 #      - "1080:1080"  # Web interface
 #      - "1025:1025"  # SMTP server
 #    restart: unless-stopped
-=======
+#=======
   maildev:
     image: maildev/maildev
     container_name: budgetbites-maildev
@@ -39,7 +39,7 @@ services:
     networks:
       - budgetbites
     restart: unless-stopped
->>>>>>> Stashed changes
+#>>>>>>> Stashed changes
 
   pgadmin:
     image: dpage/pgadmin4
