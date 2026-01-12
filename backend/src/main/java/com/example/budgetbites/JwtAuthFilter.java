@@ -71,7 +71,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        // tady nechci vůbec řešit JWT
-        return path.startsWith("/auth/") || path.startsWith("/test/");
+        return path.equals("/auth/register")
+                || path.equals("/auth/verify-email")
+                || path.equals("/auth/login")
+                || path.equals("/auth/register-simple")
+                || path.equals("/auth/resend-verification")
+                || path.equals("/auth/verification-status")
+                || path.startsWith("/test/");
     }
 }

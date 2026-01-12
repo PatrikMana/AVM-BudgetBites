@@ -1,7 +1,7 @@
 // src/pages/Dashboard.jsx
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Sparkles, Calendar, X } from "lucide-react";
+import { Plus, Sparkles, Calendar } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 
 const Dashboard = () => {
@@ -183,10 +183,35 @@ const Dashboard = () => {
                       </p>
                     </div>
                     <button
-                      className="h-8 w-8 rounded-lg hover:bg-zinc-800/60 text-zinc-400 hover:text-white transition flex items-center justify-center"
+                      className="text-white hover:text-red-500 transition-colors outline-none focus:outline-none focus-visible:outline-none active:outline-none cursor-pointer p-0 m-0"
                       onClick={() => handleRemoveItem(item.id)}
+                      aria-label="Remove item"
+                      style={{
+                        outline: 'none',
+                        border: 'none',
+                        background: 'transparent',
+                        padding: 0,
+                        margin: 0,
+                        width: '25px',
+                        height: '25px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
                     >
-                      <X className="h-4 w-4" />
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        style={{ display: 'block' }}
+                      >
+                        <line x1="4" y1="4" x2="16" y2="16" />
+                        <line x1="16" y1="4" x2="4" y2="16" />
+                      </svg>
                     </button>
                   </div>
                 </div>

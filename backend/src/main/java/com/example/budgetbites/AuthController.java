@@ -30,22 +30,22 @@ public class AuthController {
 
     // Nový endpoint pro registraci s emailem
     @PostMapping("/register")
-    public ResponseEntity<String> registerWithEmail(@RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiMessageResponse> registerWithEmail(@RequestBody RegisterRequest request) {
         logger.info("[REGISTER] username={}, email={}", request.getUsername(), request.getEmail());
         String message = authService.registerWithEmailVerification(
-            request.getUsername(), 
-            request.getEmail(), 
-            request.getPassword()
+                request.getUsername(),
+                request.getEmail(),
+                request.getPassword()
         );
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(new ApiMessageResponse(message));
     }
 
     // Nový endpoint pro verifikaci emailu
     @PostMapping("/verify-email")
-    public ResponseEntity<String> verifyEmail(@RequestBody VerifyRequest request) {
-        logger.info("[VERIFY] email={}, code={}", request.getEmail(), request.getVerificationCode());
+    public ResponseEntity<ApiMessageResponse> verifyEmail(@RequestBody VerifyRequest request) {
+        logger.info("[VERIFY] email={}", request.getEmail()); // ne logovat code
         String message = authService.verifyEmail(request.getEmail(), request.getVerificationCode());
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(new ApiMessageResponse(message));
     }
 
     // Původní endpoint pro zpětnou kompatibilitu
@@ -57,20 +57,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        try {
-            boolean success = authService.login(request.getUsername(), request.getPassword());
-            if (!success) {
-                return ResponseEntity.status(401).body("Špatné údaje");
-            }
-
-            String token = jwtService.generateToken(request.getUsername());
-            return ResponseEntity.ok(new JwtResponse(token));
-
-        } catch (ResponseStatusException ex) {
-            // typicky 403, když není ověřený email
-            return ResponseEntity.status(ex.getStatusCode()).body(ex.getReason());
+    public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest request) {
+        boolean success = authService.login(request.getUsername(), request.getPassword());
+        if (!success) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED,
+                    "Špatné údaje"
+            );
         }
+
+        String token = jwtService.generateToken(request.getUsername());
+        return ResponseEntity.ok(new JwtResponse(token));
     }
 
     @GetMapping("/users")
@@ -79,5 +76,17 @@ public class AuthController {
                 .filter(User::isEmailVerified) // Zobrazujeme pouze ověřené uživatele
                 .map(u -> new UserResponse(u.getId(), u.getUsername()))
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/verification-status")
+    public ResponseEntity<VerificationStatusResponse> verificationStatus(@RequestParam String email) {
+        return ResponseEntity.ok(authService.getVerificationStatus(email));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiMessageResponse> resendVerification(@RequestBody ResendVerificationRequest request) {
+        logger.info("[RESEND] email={}", request.getEmail());
+        String msg = authService.resendVerificationCode(request.getEmail());
+        return ResponseEntity.ok(new ApiMessageResponse(msg));
     }
 }

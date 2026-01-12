@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import java.security.SecureRandom;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
@@ -14,6 +16,12 @@ import java.util.Random;
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private static final int MAX_VERIFY_ATTEMPTS = 5;
+    private static final int RESEND_COOLDOWN_SECONDS = 60;
+    private static final int RESEND_WINDOW_MINUTES = 60;
+    private static final int MAX_RESENDS_PER_WINDOW = 5;
+    private static final int LOCK_MINUTES = 15;
     
     @Autowired
     private EmailService emailService;
@@ -24,44 +32,74 @@ public class AuthService {
     }
 
     public String registerWithEmailVerification(String username, String email, String password) {
-        // Kontrola duplicitních údajů
+        String normEmail = normalizeEmail(email);
+
         if (userRepository.findByUsername(username).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Uživatel s tímto jménem již existuje");
         }
-        
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Uživatel s tímto emailem již existuje");
+
+        Optional<User> existingByEmail = userRepository.findByEmail(normEmail);
+        if (existingByEmail.isPresent()) {
+            User existing = existingByEmail.get();
+
+            if (existing.isEmailVerified()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Uživatel s tímto emailem již existuje");
+            }
+
+            // ✅ existuje, ale není ověřený -> pošleme nový kód
+            assertResendAllowed(existing);
+
+            String oldCode = existing.getVerificationCode();
+            LocalDateTime oldExpiry = existing.getVerificationCodeExpiry();
+
+            String newCode = generateVerificationCode();
+            existing.setVerificationCode(newCode);
+            existing.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(10));
+
+            existing.setVerificationAttempts(0);
+            existing.setVerificationLockedUntil(null);
+            existing.setLastVerificationSentAt(LocalDateTime.now());
+
+            userRepository.save(existing);
+
+            try {
+                emailService.sendVerificationCode(normEmail, newCode);
+                return "Účet s tímto emailem už existuje, poslali jsme nový ověřovací kód.";
+            } catch (Exception e) {
+                existing.setVerificationCode(oldCode);
+                existing.setVerificationCodeExpiry(oldExpiry);
+                userRepository.save(existing);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nepodařilo se odeslat ověřovací email");
+            }
         }
 
-        // Generování 6místného kódu
+        // --- původní create user větev ---
         String verificationCode = generateVerificationCode();
-        
-        // Vytvoření uživatele (ale zatím neověřený)
         String hashedPassword = passwordEncoder.encode(password);
+
         User user = new User();
         user.setUsername(username);
-        user.setEmail(email);
+        user.setEmail(normEmail);
         user.setPassword(hashedPassword);
         user.setVerificationCode(verificationCode);
-        user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(10)); // Platnost 10 minut
+        user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(10));
         user.setEmailVerified(false);
-        
+
         userRepository.save(user);
-        
-        // Odeslání emailu s kódem
+
         try {
-            emailService.sendVerificationCode(email, verificationCode);
+            emailService.sendVerificationCode(normEmail, verificationCode);
             return "Na váš email byl odeslán ověřovací kód";
         } catch (Exception e) {
-            // Pokud se nepodaří odeslat email, smažeme uživatele
             userRepository.delete(user);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nepodařilo se odeslat ověřovací email");
         }
     }
 
     public String verifyEmail(String email, String verificationCode) {
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        
+        String normEmail = normalizeEmail(email);
+        Optional<User> userOpt = userRepository.findByEmail(normEmail);
+
         if (userOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Uživatel nenalezen");
         }
@@ -102,9 +140,10 @@ public class AuthService {
         return false;
     }
 
+    private static final SecureRandom secureRandom = new SecureRandom();
+
     private String generateVerificationCode() {
-        Random random = new Random();
-        int code = 100000 + random.nextInt(900000); // Generuje číslo mezi 100000-999999
+        int code = 100000 + secureRandom.nextInt(900000);
         return String.valueOf(code);
     }
 
@@ -120,4 +159,96 @@ public class AuthService {
         user.setEmailVerified(true); // Pro původní registrace bez emailu
         userRepository.save(user);
     }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+    private void assertResendAllowed(User user) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // cooldown
+        if (user.getLastVerificationSentAt() != null &&
+                user.getLastVerificationSentAt().isAfter(now.minusSeconds(RESEND_COOLDOWN_SECONDS))) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Ověřovací kód byl odeslán nedávno. Zkuste to prosím za chvíli.");
+        }
+
+        // rolling window (např. 5 resendů za 60 minut)
+        LocalDateTime windowStart = user.getResendWindowStart();
+        if (windowStart == null || windowStart.isBefore(now.minusMinutes(RESEND_WINDOW_MINUTES))) {
+            user.setResendWindowStart(now);
+            user.setResendCountInWindow(0);
+        }
+
+        if (user.getResendCountInWindow() >= MAX_RESENDS_PER_WINDOW) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Příliš mnoho požadavků na odeslání kódu. Zkuste to později.");
+        }
+
+        user.setResendCountInWindow(user.getResendCountInWindow() + 1);
+    }
+
+    public String resendVerificationCode(String email) {
+        String normEmail = normalizeEmail(email);
+
+        User user = userRepository.findByEmail(normEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Uživatel nenalezen"));
+
+        if (user.isEmailVerified()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email již byl ověřen");
+        }
+
+        assertResendAllowed(user);
+
+        String oldCode = user.getVerificationCode();
+        LocalDateTime oldExpiry = user.getVerificationCodeExpiry();
+
+        String newCode = generateVerificationCode();
+        user.setVerificationCode(newCode);
+        user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(10));
+
+        user.setVerificationAttempts(0);
+        user.setVerificationLockedUntil(null);
+        user.setLastVerificationSentAt(LocalDateTime.now());
+
+        userRepository.save(user);
+
+        try {
+            emailService.sendVerificationCode(normEmail, newCode);
+            return "Ověřovací kód byl znovu odeslán";
+        } catch (Exception e) {
+            user.setVerificationCode(oldCode);
+            user.setVerificationCodeExpiry(oldExpiry);
+            userRepository.save(user);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nepodařilo se odeslat ověřovací email");
+        }
+    }
+
+    public VerificationStatusResponse getVerificationStatus(String email) {
+        String normEmail = normalizeEmail(email);
+
+        Optional<User> userOpt = userRepository.findByEmail(normEmail);
+        if (userOpt.isEmpty()) {
+            return new VerificationStatusResponse("NOT_FOUND", normEmail, null);
+        }
+
+        User user = userOpt.get();
+
+        if (user.isEmailVerified()) {
+            return new VerificationStatusResponse("VERIFIED", normEmail, null);
+        }
+
+        LocalDateTime exp = user.getVerificationCodeExpiry();
+        if (exp == null) {
+            return new VerificationStatusResponse("EXPIRED", normEmail, null);
+        }
+
+        if (exp.isBefore(LocalDateTime.now())) {
+            return new VerificationStatusResponse("EXPIRED", normEmail, exp.toString());
+        }
+
+        return new VerificationStatusResponse("PENDING", normEmail, exp.toString());
+    }
 }
+
