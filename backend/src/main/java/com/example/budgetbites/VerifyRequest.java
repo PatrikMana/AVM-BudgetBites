@@ -1,7 +1,16 @@
 package com.example.budgetbites;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+
 public class VerifyRequest {
+    @NotBlank(message = "email je povinný")
+    @Email(message = "email nemá správný formát")
     private String email;
+
+    @NotBlank(message = "verificationCode je povinný")
+    @Pattern(regexp = "^\\d{6}$", message = "verificationCode musí být 6 číslic")
     private String verificationCode;
 
     public String getEmail() {

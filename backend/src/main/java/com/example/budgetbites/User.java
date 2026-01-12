@@ -75,4 +75,53 @@ public class User {
     public void setEmailVerified(boolean emailVerified) {
         this.emailVerified = emailVerified;
     }
+
+    private int verificationAttempts = 0;
+
+    private LocalDateTime verificationLockedUntil;
+
+    private LocalDateTime lastVerificationSentAt;
+
+    private int resendCountInWindow = 0;
+    private LocalDateTime resendWindowStart;
+
+    public int getVerificationAttempts() {
+        return verificationAttempts;
+    }
+
+    public void setVerificationAttempts(int verificationAttempts) {
+        this.verificationAttempts = verificationAttempts;
+    }
+
+    public LocalDateTime getVerificationLockedUntil() {
+        return verificationLockedUntil;
+    }
+
+    public void setVerificationLockedUntil(LocalDateTime verificationLockedUntil) {
+        this.verificationLockedUntil = verificationLockedUntil;
+    }
+
+    public LocalDateTime getLastVerificationSentAt() {
+        return lastVerificationSentAt;
+    }
+
+    public void setLastVerificationSentAt(LocalDateTime lastVerificationSentAt) {
+        this.lastVerificationSentAt = lastVerificationSentAt;
+    }
+
+    public int getResendCountInWindow() {
+        return resendCountInWindow;
+    }
+
+    public void setResendCountInWindow(int resendCountInWindow) {
+        this.resendCountInWindow = resendCountInWindow;
+    }
+
+    public LocalDateTime getResendWindowStart() {
+        return resendWindowStart;
+    }
+
+    public void setResendWindowStart(LocalDateTime resendWindowStart) {
+        this.resendWindowStart = resendWindowStart;
+    }
 }

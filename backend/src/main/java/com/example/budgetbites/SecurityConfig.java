@@ -36,9 +36,20 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         // veřejné endpointy:
-                        .requestMatchers("/auth/**", "/test/**").permitAll()
-                        // všechno ostatní musí mít JWT:
-                        .anyRequest().authenticated()
+                        .requestMatchers(
+                                "/auth/register",
+                                "/auth/verify-email",
+                                "/auth/login",
+                                "/auth/register-simple"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/auth/register",
+                                "/auth/verify-email",
+                                "/auth/login",
+                                "/auth/register-simple",
+                                "/auth/resend-verification",
+                                "/auth/verification-status"
+                        ).permitAll()
                 )
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
