@@ -209,18 +209,6 @@ export default function Home() {
                             <span className="font-semibold text-white">BudgetBites</span>
                         </div>
 
-                        <nav className="flex gap-6 text-sm">
-                            <Link to="/" className="text-zinc-400 hover:text-emerald-500 transition-colors">
-                                Home
-                            </Link>
-                            <Link to="/generate" className="text-zinc-400 hover:text-emerald-500 transition-colors">
-                                Generator
-                            </Link>
-                            <Link to="/login" className="text-zinc-400 hover:text-emerald-500 transition-colors">
-                                Sign In
-                            </Link>
-                        </nav>
-
                         <p className="text-sm text-zinc-500">
                             © 2025 BudgetBites. All rights reserved.
                         </p>
