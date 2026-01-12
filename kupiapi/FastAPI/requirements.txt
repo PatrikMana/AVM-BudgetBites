@@ -1,0 +1,14 @@
+# Kupi Bridge (FastAPI) - Python Dependencies
+
+# FastAPI framework a server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Kupiapi scraper knihovna
+kupiapi
+
+# Environment variables support
+python-dotenv==1.0.0
+
+# Requests pro HTTP klienty (volitelné pro testování)
+requests==2.31.0
