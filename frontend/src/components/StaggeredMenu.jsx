@@ -44,6 +44,8 @@ export const StaggeredMenu = ({
 
     const toggleBtnRef = useRef(null);
     const busyRef = useRef(false);
+    // Timer který uvolní busyRef dříve než timeline dokončí (release před koncem)
+    const releaseTimerRef = useRef(null);
 
     const itemEntranceTweenRef = useRef(null);
 
@@ -183,7 +185,21 @@ export const StaggeredMenu = ({
         busyRef.current = true;
         const tl = buildOpenTimeline();
         if (tl) {
-            tl.eventCallback('onComplete', () => { busyRef.current = false; });
+            // zrušíme jakýkoli dříve naplánovaný timer
+            try { if (releaseTimerRef.current) { clearTimeout(releaseTimerRef.current); releaseTimerRef.current = null; } } catch(e){}
+
+            const dur = typeof tl.duration === 'function' ? tl.duration() : 0;
+            const releaseOffset = 0.2; // v sekundách - uprav si podle potřeby
+            const releaseAfter = Math.max(0, (dur - releaseOffset));
+
+            if (releaseAfter <= 0) {
+                // okamžité uvolnění v next tick
+                releaseTimerRef.current = setTimeout(() => { busyRef.current = false; releaseTimerRef.current = null; }, 0);
+            } else {
+                releaseTimerRef.current = setTimeout(() => { busyRef.current = false; releaseTimerRef.current = null; }, Math.round(releaseAfter * 1000));
+            }
+
+            tl.eventCallback('onComplete', () => { try { if (releaseTimerRef.current) { clearTimeout(releaseTimerRef.current); releaseTimerRef.current = null; } } catch(e){} busyRef.current = false; });
             tl.play(0);
         } else {
             busyRef.current = false;
@@ -191,6 +207,9 @@ export const StaggeredMenu = ({
     }, [buildOpenTimeline]);
 
     const playClose = useCallback(() => {
+        // pokud byl naplánován release timer (otevírání), zrušíme ho, protože jdeme zavřít
+        try { if (releaseTimerRef.current) { clearTimeout(releaseTimerRef.current); releaseTimerRef.current = null; } } catch(e){}
+
         openTlRef.current?.kill();
         openTlRef.current = null;
         itemEntranceTweenRef.current?.kill();
@@ -303,10 +322,23 @@ export const StaggeredMenu = ({
     }, []);
 
     const toggleMenu = useCallback(() => {
-        // Pokud běží animace, zablokuj klikání
-        if (busyRef.current) return;
-
         const target = !openRef.current;
+
+        // Blokujeme otevírání pokud už probíhá animace
+        if (busyRef.current && target === true) {
+            return; // blokujeme další otevření zatím
+        }
+
+        // Pokud uživatel chce zavřít během otevírání, okamžitě zrušíme otevírací timeline
+        // a vyčistíme plánované timeouty, aby zavření proběhlo okamžitě.
+        if (busyRef.current && target === false) {
+            try { if (releaseTimerRef.current) { clearTimeout(releaseTimerRef.current); releaseTimerRef.current = null; } } catch(e){}
+            try { if (openTlRef.current) { openTlRef.current.kill(); openTlRef.current = null; } } catch(e){}
+            try { if (itemEntranceTweenRef.current) { itemEntranceTweenRef.current.kill(); itemEntranceTweenRef.current = null; } } catch(e){}
+            // uvolníme busy flag, playClose nastaví busy správně během zavírání
+            busyRef.current = false;
+        }
+
         openRef.current = target;
         setOpen(target);
 
