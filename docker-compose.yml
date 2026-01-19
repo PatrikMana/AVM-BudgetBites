@@ -21,15 +21,6 @@ services:
       - budgetbites
     restart: unless-stopped
 
-#<<<<<<< Updated upstream
-#  maildev:
-#    image: maildev/maildev
-#    container_name: budgetbites-maildev
-#    ports:
-#      - "1080:1080"  # Web interface
-#      - "1025:1025"  # SMTP server
-#    restart: unless-stopped
-#=======
   maildev:
     image: maildev/maildev
     container_name: budgetbites-maildev
@@ -39,7 +30,6 @@ services:
     networks:
       - budgetbites
     restart: unless-stopped
-#>>>>>>> Stashed changes
 
   pgadmin:
     image: dpage/pgadmin4
@@ -54,128 +44,6 @@ services:
     networks:
       - budgetbites
     restart: unless-stopped
-
-  # KupiAPI FastAPI služba - scraper bridge
-  kupiapi:
-    build: 
-      context: ./kupiapi/FastAPI
-      dockerfile: Dockerfile
-    container_name: kupiapi-bridge
-    ports:
-      - "8000:8000"
-    environment:
-      - TZ=Europe/Prague
-    networks:
-      - budgetbites
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./kupiapi/logs:/app/logs
-
-  # KupiAPI ETL služba - stahování a ukládání slev
-  kupiapi-etl:
-    build: 
-      context: ./kupiapi/etl
-      dockerfile: Dockerfile
-    container_name: budgetbites-etl
-    environment:
-      - TZ=Europe/Prague
-      - DB_HOST=budgetbites-postgres
-      - DB_PORT=5432
-      - DB_NAME=budgetbites
-      - DB_USER=admin
-      - DB_PASSWORD=password
-      - FASTAPI_URL=http://kupiapi-bridge:8000
-      - MAX_RETRIES=3
-      - RETRY_DELAY=60
-      - CRON_SCHEDULE=0 */12 * * *  # Každých 12 hodin
-    networks:
-      - budgetbites
-    depends_on:
-      - postgres
-      - kupiapi
-    restart: unless-stopped
-    volumes:
-      - ./kupiapi/logs/etl:/app/logs
-    healthcheck:
-      test: ["CMD", "python", "-c", "import psutil; exit(0 if any('etl_service' in p.name() for p in psutil.process_iter()) else 1)"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: budgetbites-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@budgetbites.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
-    networks:
-      - budgetbites
-    restart: unless-stopped
-
-  # KupiAPI FastAPI služba - scraper bridge
-  kupiapi:
-    build: 
-      context: ./kupiapi/FastAPI
-      dockerfile: Dockerfile
-    container_name: kupiapi-bridge
-    ports:
-      - "8000:8000"
-    environment:
-      - TZ=Europe/Prague
-    networks:
-      - budgetbites
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    volumes:
-      - ./kupiapi/logs:/app/logs
-
-  # KupiAPI ETL služba - stahování a ukládání slev
-  kupiapi-etl:
-    build: 
-      context: ./kupiapi/etl
-      dockerfile: Dockerfile
-    container_name: budgetbites-etl
-    environment:
-      - TZ=Europe/Prague
-      - DB_HOST=budgetbites-postgres
-      - DB_PORT=5432
-      - DB_NAME=budgetbites
-      - DB_USER=admin
-      - DB_PASSWORD=password
-      - FASTAPI_URL=http://kupiapi-bridge:8000
-      - MAX_RETRIES=3
-      - RETRY_DELAY=60
-      - CRON_SCHEDULE=0 */12 * * *  # Každých 12 hodin
-    networks:
-      - budgetbites
-    depends_on:
-      - postgres
-      - kupiapi
-    restart: unless-stopped
-    volumes:
-      - ./kupiapi/logs/etl:/app/logs
-    healthcheck:
-      test: ["CMD", "python", "-c", "import psutil; exit(0 if any('etl_service' in p.name() for p in psutil.process_iter()) else 1)"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
 volumes:
   postgres_data:

@@ -85,7 +85,7 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
                     {/* Grid */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {/* Budget */}
-                        <Field label="Maximum Budget ($)" icon={<DollarSign className="h-4 w-4" />}>
+                        <Field label="Meals/Day" icon={<DollarSign className="h-4 w-4" />}>
                             <input
                                 type="number"
                                 min={0}
@@ -101,7 +101,7 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
                         </Field>
 
                         {/* Calories */}
-                        <Field label="Max Calories/Serving" icon={<Zap className="h-4 w-4" />}>
+                        <Field label="Calories/Day" icon={<Zap className="h-4 w-4" />}>
                             <input
                                 type="number"
                                 min={0}
