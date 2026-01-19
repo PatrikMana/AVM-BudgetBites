@@ -303,6 +303,9 @@ export const StaggeredMenu = ({
     }, []);
 
     const toggleMenu = useCallback(() => {
+        // Pokud běží animace, zablokuj klikání
+        if (busyRef.current) return;
+
         const target = !openRef.current;
         openRef.current = target;
         setOpen(target);
