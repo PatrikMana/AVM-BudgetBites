@@ -165,7 +165,7 @@ export default function Home() {
                                 key={index}
                                 className={`rounded-2xl border ${
                                     plan.isOutline ? 'border-white/10' : 'border-emerald-500/50'
-                                } bg-zinc-900/80 p-6 backdrop-blur`}
+                                } bg-zinc-900/80 p-6 backdrop-blur flex flex-col`}
                             >
                                 <div className="mb-6">
                                     <h3 className="text-2xl font-semibold text-white">{plan.name}</h3>
@@ -175,7 +175,7 @@ export default function Home() {
                                     </p>
                                 </div>
                                 
-                                <ul className="space-y-3 mb-6">
+                                <ul className="space-y-3 mb-6 flex-grow">
                                     {plan.features.map((feature, idx) => (
                                         <li key={idx} className="flex items-start gap-3">
                                             <Check className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
@@ -186,7 +186,7 @@ export default function Home() {
                                 
                                 <Link
                                     to={plan.link}
-                                    className={`inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition ${
+                                    className={`inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition mt-auto ${
                                         plan.isOutline
                                             ? 'border border-white/10 bg-zinc-800/60 text-white hover:bg-zinc-800/90'
                                             : 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/30 hover:bg-emerald-500'

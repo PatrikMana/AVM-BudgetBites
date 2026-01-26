@@ -490,25 +490,6 @@ export const StaggeredMenu = ({
                         )}
                     </ul>
 
-                    {displaySocials && socialItems && socialItems.length > 0 && (
-                        <div className="sm-socials mt-auto pt-8 flex flex-col gap-3" aria-label="Social links">
-                            <h3 className="sm-socials-title m-0 text-base font-medium [color:var(--sm-accent,#ff0000)]">Socials</h3>
-                            <ul className="sm-socials-list list-none m-0 p-0 flex flex-row items-center gap-4 flex-wrap" role="list">
-                                {socialItems.map((s, i) => (
-                                    <li key={s.label + i} className="sm-socials-item">
-                                        <a
-                                            href={s.link}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="sm-socials-link text-[1.2rem] font-medium !text-emerald-500 hover:!text-emerald-300 relative inline-block py-[2px] no-underline transition-[color] duration-200 ease-in-out"
-                                        >
-                                            {s.label}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
                 </div>
 
                 {/* User Profile Section - fixed at absolute bottom */}
