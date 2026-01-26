@@ -1,12 +1,16 @@
-package com.example.budgetbites;
+package com.example.budgetbites.controller;
 
+import com.example.budgetbites.service.EmailService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+/**
+ * Controller pro testování emailové služby.
+ * Slouží pouze pro vývoj a testování.
+ */
 @RestController
 @RequestMapping("/test")
 public class EmailTestController {
@@ -16,6 +20,10 @@ public class EmailTestController {
     @Autowired
     private EmailService emailService;
 
+    /**
+     * Odešle testovací email.
+     * POST /test/email?email=...
+     */
     @PostMapping("/email")
     public ResponseEntity<String> testEmail(@RequestParam String email) {
         logger.info("[TEST-EMAIL] requested to send test email to={}", email);

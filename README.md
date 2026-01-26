@@ -5,25 +5,45 @@ Full-stack aplikace pro správu jídelníčku s automatickým sledováním slev 
 ## Struktura projektu
 
 ```
-AVM-BudgetBites/
+AWM-MealBuilder/
 ├── .gitignore          # Společný gitignore pro celý projekt
 ├── README.md           # Tento soubor
 ├── docker-compose.yml  # Všechny služby (PostgreSQL, KupiAPI, PgAdmin, MailDev)
-├── backend/            # Spring Boot aplikace
-│   ├── src/
+│
+├── backend/            # Spring Boot aplikace (Java 21)
+│   ├── src/main/java/com/example/budgetbites/
+│   │   ├── BudgetBitesApplication.java   # Vstupní bod
+│   │   ├── config/                       # Konfigurace (Security, Email)
+│   │   ├── controller/                   # REST API endpointy
+│   │   ├── domain/                       # Entity a Repository
+│   │   │   ├── entity/                   # JPA entity (User, ...)
+│   │   │   └── repository/               # Spring Data JPA repositories
+│   │   ├── dto/                          # Data Transfer Objects
+│   │   │   ├── request/                  # Vstupní DTOs
+│   │   │   └── response/                 # Výstupní DTOs
+│   │   ├── exception/                    # Globální zpracování chyb
+│   │   ├── security/                     # JWT autentizace
+│   │   └── service/                      # Business logika
 │   ├── pom.xml
-│   ├── mvnw, mvnw.cmd
-│   └── target/
+│   └── mvnw, mvnw.cmd
+│
 ├── frontend/           # React aplikace
 │   ├── src/
+│   │   ├── components/                   # UI komponenty
+│   │   ├── pages/                        # Stránky aplikace
+│   │   ├── hooks/                        # Custom React hooks
+│   │   └── lib/                          # Utility funkce
 │   ├── package.json
-│   ├── vite.config.js
-│   └── node_modules/
-└── kupiapi/            # Automatické sledování slev
-    ├── FastAPI/        # REST API bridge nad kupiapi scraperем
-    ├── etl/            # ETL služba pro ukládání slev do DB
-    ├── database/       # Databázové schéma
-    └── logs/           # Logy služeb
+│   └── vite.config.js
+│
+├── kupiapi/            # Automatické sledování slev
+│   ├── FastAPI/        # REST API pro slevy
+│   ├── etl/            # ETL služba (Python)
+│   ├── database/       # Databázové schéma
+│   └── logs/           # Logy služeb
+│
+└── ios/                # iOS aplikace (Swift)
+    └── BugetBites/
 ```
 
 ## 🚀 Spuštění celého systému
@@ -132,7 +152,56 @@ docker-compose logs -f kupiapi-etl
 
 ## API Endpointy hlavní aplikace
 
-- `GET /api/hello` - Test endpoint
+### Autentizace (`/auth`)
+
+| Metoda | Endpoint | Popis | Auth |
+|--------|----------|-------|------|
+| `POST` | `/auth/register` | Registrace s emailovou verifikací | ❌ |
+| `POST` | `/auth/verify-email` | Ověření emailu kódem | ❌ |
+| `POST` | `/auth/login` | Přihlášení (vrací JWT) | ❌ |
+| `POST` | `/auth/register-simple` | Jednoduchá registrace bez verifikace | ❌ |
+| `POST` | `/auth/resend-verification` | Znovu zaslat verifikační kód | ❌ |
+| `GET` | `/auth/verification-status` | Stav verifikace emailu | ❌ |
+| `GET` | `/auth/users` | Seznam ověřených uživatelů | ✅ |
+
+### Ostatní
+
+| Metoda | Endpoint | Popis | Auth |
+|--------|----------|-------|------|
+| `GET` | `/api/hello` | Test endpoint | ❌ |
+| `POST` | `/test/email` | Testovací email | ❌ |
+
+## 🏗️ Backend architektura
+
+Backend používá **vrstvovou architekturu**:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    CONTROLLER LAYER                      │
+│         (REST API endpoints, request handling)           │
+├─────────────────────────────────────────────────────────┤
+│                     SERVICE LAYER                        │
+│              (Business logic, validation)                │
+├─────────────────────────────────────────────────────────┤
+│                    DOMAIN LAYER                          │
+│            (Entities, Repositories, DTOs)                │
+├─────────────────────────────────────────────────────────┤
+│                  INFRASTRUCTURE LAYER                    │
+│         (Security, Config, External services)            │
+└─────────────────────────────────────────────────────────┘
+```
+
+| Balíček | Odpovědnost |
+|---------|-------------|
+| `config` | Konfigurace Spring beans (Security, Mail) |
+| `controller` | REST endpointy, validace vstupů |
+| `domain.entity` | JPA entity mapované na DB tabulky |
+| `domain.repository` | Data Access Layer (Spring Data JPA) |
+| `dto.request` | Vstupní objekty z API požadavků |
+| `dto.response` | Výstupní objekty pro API odpovědi |
+| `exception` | Globální zpracování chyb |
+| `security` | JWT autentizace, filtry, UserDetails |
+| `service` | Business logika aplikace |
 
 ## 💡 Tip pro vývoj
 

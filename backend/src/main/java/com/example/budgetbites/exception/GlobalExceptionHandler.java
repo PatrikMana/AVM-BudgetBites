@@ -1,4 +1,4 @@
-package com.example.budgetbites;
+package com.example.budgetbites.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -12,9 +12,16 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Globální handler výjimek pro celou aplikaci.
+ * Zajišťuje konzistentní formát chybových odpovědí.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Zpracování validačních chyb z @Valid anotací.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException ex,
                                                             HttpServletRequest request) {
@@ -34,6 +41,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(400).body(body);
     }
 
+    /**
+     * Zpracování chyb při parsování JSON.
+     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> handleBadJson(HttpMessageNotReadableException ex,
                                                          HttpServletRequest request) {
@@ -48,6 +58,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(400).body(body);
     }
 
+    /**
+     * Zpracování ResponseStatusException vyhazovaných ze služeb a controllerů.
+     */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiErrorResponse> handleResponseStatus(ResponseStatusException ex,
                                                                  HttpServletRequest request) {
@@ -67,6 +80,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(body);
     }
 
+    /**
+     * Fallback handler pro všechny ostatní výjimky.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
         ApiErrorResponse body = new ApiErrorResponse(

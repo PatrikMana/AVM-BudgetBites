@@ -1,5 +1,7 @@
-package com.example.budgetbites;
+package com.example.budgetbites.service;
 
+import com.example.budgetbites.domain.entity.User;
+import com.example.budgetbites.domain.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +11,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Služba pro automatické čištění neověřených uživatelských účtů.
+ * Pravidelně odstraňuje účty s vypršelým verifikačním kódem.
+ */
 @Service
 public class UserCleanupService {
 
@@ -26,6 +32,10 @@ public class UserCleanupService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Pravidelně odstraňuje neověřené uživatele s vypršelým verifikačním kódem.
+     * Výchozí spuštění: každý den ve 3:00.
+     */
     @Scheduled(cron = "${cleanup.unverified.cron:0 0 3 * * *}")
     public void cleanupUnverifiedUsers() {
         if (!enabled) return;

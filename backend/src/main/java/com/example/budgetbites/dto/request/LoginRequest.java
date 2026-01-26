@@ -1,8 +1,11 @@
-package com.example.budgetbites;
+package com.example.budgetbites.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO pro přihlášení uživatele.
+ */
 public class LoginRequest {
 
     @NotBlank(message = "username je povinný")

@@ -1,5 +1,7 @@
-package com.example.budgetbites;
+package com.example.budgetbites.config;
 
+import com.example.budgetbites.security.CustomUserDetailsService;
+import com.example.budgetbites.security.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +18,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Konfigurace Spring Security.
+ * Nastavuje JWT autentizaci, veřejné a chráněné endpointy.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -35,13 +41,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        // veřejné endpointy:
-                        .requestMatchers(
-                                "/auth/register",
-                                "/auth/verify-email",
-                                "/auth/login",
-                                "/auth/register-simple"
-                        ).permitAll()
+                        // Veřejné endpointy (bez autentizace)
                         .requestMatchers(
                                 "/auth/register",
                                 "/auth/verify-email",
@@ -50,6 +50,12 @@ public class SecurityConfig {
                                 "/auth/resend-verification",
                                 "/auth/verification-status"
                         ).permitAll()
+                        // Test endpointy
+                        .requestMatchers("/test/**").permitAll()
+                        // API endpointy
+                        .requestMatchers("/api/**").permitAll()
+                        // Všechny ostatní vyžadují autentizaci
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -69,7 +75,6 @@ public class SecurityConfig {
         return provider;
     }
 
-    // Zatím ho nijak nevyužiješ, ale je dobré ho mít k dispozici
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration configuration) throws Exception {

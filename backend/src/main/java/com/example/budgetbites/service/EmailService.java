@@ -1,4 +1,4 @@
-package com.example.budgetbites;
+package com.example.budgetbites.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +11,10 @@ import org.slf4j.LoggerFactory;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
+/**
+ * Služba pro odesílání emailů.
+ * Zajišťuje odesílání verifikačních kódů a dalších systémových emailů.
+ */
 @Service
 public class EmailService {
 
@@ -22,6 +26,9 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    /**
+     * Odešle verifikační kód na zadanou emailovou adresu.
+     */
     public void sendVerificationCode(String toEmail, String verificationCode) {
         try {
             logger.info("Pokouším se odeslat email na adresu: {}", toEmail);
@@ -44,6 +51,9 @@ public class EmailService {
         }
     }
 
+    /**
+     * Sestaví HTML obsah verifikačního emailu.
+     */
     private String buildHtmlContent(String verificationCode) {
         return "<!doctype html>\n" +
                 "<html lang=\"cs\">\n" +

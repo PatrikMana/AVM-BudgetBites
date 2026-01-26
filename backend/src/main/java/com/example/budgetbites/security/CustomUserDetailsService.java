@@ -1,10 +1,16 @@
-package com.example.budgetbites;
+package com.example.budgetbites.security;
 
+import com.example.budgetbites.domain.entity.User;
+import com.example.budgetbites.domain.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+/**
+ * Implementace UserDetailsService pro Spring Security.
+ * Načítá uživatelské údaje z databáze pro autentizaci.
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -20,7 +26,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found: " + username));
 
-        // role řeším jednoduše jako "ROLE_USER"
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())

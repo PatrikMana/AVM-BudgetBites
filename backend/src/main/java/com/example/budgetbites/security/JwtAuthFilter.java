@@ -1,4 +1,4 @@
-package com.example.budgetbites;
+package com.example.budgetbites.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,6 +15,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * Filtr pro JWT autentizaci.
+ * Zpracovává JWT tokeny z hlavičky Authorization a nastavuje kontext zabezpečení.
+ */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 

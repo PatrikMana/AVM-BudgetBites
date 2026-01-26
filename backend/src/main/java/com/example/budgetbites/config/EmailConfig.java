@@ -1,4 +1,4 @@
-package com.example.budgetbites;
+package com.example.budgetbites.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
+/**
+ * Konfigurace emailového klienta.
+ * Nastavuje SMTP parametry pro odesílání emailů (výchozí Gmail).
+ */
 @Configuration
 public class EmailConfig {
 

@@ -1,9 +1,10 @@
-package com.example.budgetbites;
+package com.example.budgetbites.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -11,19 +12,29 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
+/**
+ * Služba pro práci s JWT tokeny.
+ * Generování, validace a extrakce informací z tokenů.
+ */
 @Service
 public class JwtService {
 
-    // HLAVNĚ: ať je ten string dlouhý (>= 32 znaků)
-    private static final String SECRET_KEY = "toto_je_muj_tajny_budgetbites_jwt_klic_123456";
+    @Value("${jwt.secret:toto_je_muj_tajny_budgetbites_jwt_klic_123456}")
+    private String secretKey;
+    
+    @Value("${jwt.expiration-ms:3600000}")
+    private long expirationMs;
 
     private Key getSignKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
+    /**
+     * Generuje JWT token pro daného uživatele.
+     */
     public String generateToken(String username) {
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + 1000 * 60 * 60); // 1 hodina
+        Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
                 .setSubject(username)
@@ -33,10 +44,16 @@ public class JwtService {
                 .compact();
     }
 
+    /**
+     * Extrahuje uživatelské jméno z tokenu.
+     */
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
     }
 
+    /**
+     * Validuje token proti UserDetails.
+     */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         String username = extractUsername(token);
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
