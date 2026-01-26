@@ -24,9 +24,12 @@ COPY etl_service.py .
 # Vytvoření logs adresáře
 RUN mkdir -p /app/logs
 
-# Health check
-HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-  CMD python -c "import psutil; exit(0 if any('etl_service' in p.name() for p in psutil.process_iter()) else 1)"
+# Expose port pro HTTP API (manuální trigger)
+EXPOSE 8080
+
+# Health check - kontroluje HTTP API
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
 
 # Spuštění ETL service
 CMD ["python", "etl_service.py"]

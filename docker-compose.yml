@@ -1,26 +1,92 @@
-version: '3.8'
-
 networks:
   budgetbites:
     driver: bridge
 
 services:
+  # PostgreSQL databáze
   postgres:
-    image: postgres
+    image: postgres:16-alpine
     container_name: budgetbites-postgres
     environment:
       POSTGRES_DB: budgetbites
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
+      TZ: Europe/Prague
     ports:
-      - "5332:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./kupiapi/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     networks:
       - budgetbites
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d budgetbites || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
+  # KupiAPI Bridge - FastAPI scraper
+  kupiapi:
+    build:
+      context: ./kupiapi/FastAPI
+      dockerfile: Dockerfile
+    container_name: kupiapi-bridge
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=Europe/Prague
+    networks:
+      - budgetbites
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - ./kupiapi/logs:/app/logs
+
+  # ETL Service - stahování a ukládání slev
+  etl:
+    build:
+      context: ./kupiapi/etl
+      dockerfile: Dockerfile
+    container_name: budgetbites-etl
+    ports:
+      - "8080:8080"  # HTTP API pro manuální trigger
+    environment:
+      - TZ=Europe/Prague
+      - DB_HOST=budgetbites-postgres
+      - DB_PORT=5432
+      - DB_NAME=budgetbites
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - FASTAPI_URL=http://kupiapi-bridge:8000
+      - MAX_RETRIES=3
+      - RETRY_DELAY=30
+      - ETL_INTERVAL_HOURS=12
+      - INITIAL_DELAY_SECONDS=60
+    networks:
+      - budgetbites
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kupiapi:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./kupiapi/logs/etl:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # MailDev - testovací SMTP server
   maildev:
     image: maildev/maildev
     container_name: budgetbites-maildev
@@ -31,6 +97,7 @@ services:
       - budgetbites
     restart: unless-stopped
 
+  # pgAdmin - databázová administrace
   pgadmin:
     image: dpage/pgadmin4
     container_name: budgetbites-pgadmin

@@ -1,74 +1,77 @@
+"""
+BudgetBites KupiAPI Bridge
+REST API pro scraping slev z českých obchodů pomocí kupiapi knihovny.
+
+Funkce:
+- Stahování slev z obchodů (Albert, Lidl, Kaufland, Billa, Penny, Globus)
+- Správné kategorie přímo z kupi.cz (fetchování podle kategorií)
+- ETL endpoint pro pravidelné ukládání do databáze
+- Filtrování pouze potravinových kategorií
+
+DŮLEŽITÉ: kupiapi neposkytuje původní ceny ani procenta slevy!
+Tyto hodnoty nejsou na kupi.cz dostupné, proto jsou v odpovědích None.
+"""
+
 from __future__ import annotations
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Optional, List, Dict, Any
 import re
+import logging
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from enum import Enum
 
 import kupiapi.scraper
 import json
 
-# -----------------------------------------------------------------------------
-# App
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Logging
+# =============================================================================
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('kupiapi-bridge')
+
+# =============================================================================
+# App konfigurace
+# =============================================================================
+
 app = FastAPI(
-    title="KupiAPI Bridge",
-    version="2.0.0", 
+    title="BudgetBites KupiAPI Bridge",
+    version="3.0.0",
     description="""
-    REST API bridge pro kupiapi scraper s nativními kategoriemi.
-    
-    ## Podporované kategorie
-    
-    ### 🍎 Potravinářské kategorie:
-    - **alkohol** - Alkoholické nápoje (víno, pivo, lihoviny)
-    - **konzervy** - Konzervované potraviny
-    - **lahudky** - Lahůdky a delikatesy
-    - **maso-drubez-a-ryby** - Maso, drůbež a ryby
-    - **mlecne-vyrobky-a-vejce** - Mléčné výrobky a vejce
-    - **mrazene-a-instantni-potraviny** - Mražené a instantní potraviny
-    - **nealko-napoje** - Nealkoholické nápoje
-    - **ovoce-a-zelenina** - Ovoce a zelenina
-    - **pecivo** - Pečivo a chléb
-    - **sladkosti-a-slane-snacky** - Sladkosti a slané snacky
-    - **vareni-a-peceni** - Vaření a pečení (koření, omáčky, ingredience)
-    - **zdrava-vyziva** - Zdravá výživa a bio produkty
-    
-    ### 🏠 Nepotravinářské kategorie:
-    - **auto-moto** - Auto a moto produkty
-    - **domacnost** - Domácnost a čisticí prostředky
-    - **drogerie** - Drogerie a hygiena
-    - **elektro** - Elektronika a technika
-    - **hracky-2** - Hračky
-    - **kancelarske-potreby-a-knihy-2** - Kancelářské potřeby a knihy
-    - **krasa** - Krása a péče
-    - **lekarna** - Lékárenské produkty
-    - **mazlicci** - Produkty pro mazlíčky
-    - **nabytek-2** - Nábytek
-    - **obleceni-a-obuv** - Oblečení a obuv
-    - **pro-deti** - Produkty pro děti (pleny, kojenecké potřeby)
-    - **sport-2** - Sportovní potřeby
-    - **bydleni-a-zahrada** - Bydlení a zahrada
-    
-    ## Podporované obchody
-    Albert, Lidl, Kaufland, Billa, Penny, Globus
-    """,
-    contact={
-        "name": "BudgetBites Support",
-        "email": "support@budgetbites.cz"
-    },
-    license_info={
-        "name": "MIT",
-    }
+REST API bridge pro kupiapi scraper - stahování slev z českých obchodů.
+
+## Podporované obchody
+Albert, Lidl, Kaufland, Billa, Penny, Globus
+
+## Potravinové kategorie (nativní z kupi.cz)
+- **alkohol** - Alkoholické nápoje
+- **konzervy** - Konzervované potraviny
+- **lahudky** - Lahůdky a delikatesy
+- **maso-drubez-a-ryby** - Maso, drůbež a ryby
+- **mlecne-vyrobky-a-vejce** - Mléčné výrobky a vejce
+- **mrazene-a-instantni-potraviny** - Mražené a instantní potraviny
+- **nealko-napoje** - Nealkoholické nápoje
+- **ovoce-a-zelenina** - Ovoce a zelenina
+- **pecivo** - Pečivo
+- **sladkosti-a-slane-snacky** - Sladkosti a slané snacky
+- **vareni-a-peceni** - Vaření a pečení
+
+**Poznámka:** kupi.cz neposkytuje původní ceny ani procenta slevy, proto tyto hodnoty nejsou dostupné.
+
+## ETL Endpoint
+`/v1/discounts/etl` - endpoint pro ETL službu s produkty ze VŠECH potravinových kategorií
+""",
+    contact={"name": "BudgetBites", "email": "support@budgetbites.cz"},
+    license_info={"name": "MIT"}
 )
 
-# CORS (uprav podle svého FE)
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],           # v produkci omez!
+    allow_origins=["*"],  # V produkci omezit!
     allow_credentials=True,
     allow_methods=["GET"],
     allow_headers=["*"],
@@ -77,410 +80,563 @@ app.add_middleware(
 TZ = ZoneInfo("Europe/Prague")
 scraper = kupiapi.scraper.KupiScraper()
 
-# -----------------------------------------------------------------------------
-# Nativní kupiapi kategorie
-# -----------------------------------------------------------------------------
-# Získáme dostupné kategorie přímo z kupiapi
-KUPIAPI_CATEGORIES = [
-    "alkohol", "auto-moto", "domacnost", "drogerie", "elektro", "hracky-2",
-    "kancelarske-potreby-a-knihy-2", "konzervy", "krasa", "lahudky", "lekarna",
-    "maso-drubez-a-ryby", "mazlicci", "mlecne-vyrobky-a-vejce", 
-    "mrazene-a-instantni-potraviny", "nabytek-2", "nealko-napoje",
-    "obleceni-a-obuv", "ovoce-a-zelenina", "pecivo", "pro-deti",
-    "sladkosti-a-slane-snacky", "sport-2", "vareni-a-peceni",
-    "bydleni-a-zahrada", "zdrava-vyziva"
-]
+# =============================================================================
+# Konstanty - Kategorie
+# =============================================================================
 
-# Mapování kupiapi kategorií na přátelské názvy pro UI
-CATEGORY_DISPLAY_NAMES = {
+# Potravinové kategorie - pouze tyto budeme fetchovat pro ETL
+FOOD_CATEGORIES = {
     "alkohol": "Alkoholické nápoje",
+    "konzervy": "Konzervy",
+    "lahudky": "Lahůdky",
+    "maso-drubez-a-ryby": "Maso, drůbež a ryby",
+    "mlecne-vyrobky-a-vejce": "Mléčné výrobky a vejce",
+    "mrazene-a-instantni-potraviny": "Mražené a instant potraviny",
+    "nealko-napoje": "Nealkoholické nápoje",
+    "ovoce-a-zelenina": "Ovoce a zelenina",
+    "pecivo": "Pečivo",
+    "sladkosti-a-slane-snacky": "Sladkosti a slané snacky",
+    "vareni-a-peceni": "Vaření a pečení"
+}
+
+# Nepotravinové kategorie - tyto ignorujeme
+NON_FOOD_CATEGORIES = {
     "auto-moto": "Auto a moto",
-    "domacnost": "Domácnost", 
+    "bydleni-a-zahrada": "Bydlení a zahrada",
+    "domacnost": "Domácnost",
     "drogerie": "Drogerie a hygiena",
     "elektro": "Elektronika",
     "hracky-2": "Hračky",
     "kancelarske-potreby-a-knihy-2": "Kancelář a knihy",
-    "konzervy": "Konzervy",
     "krasa": "Krása a péče",
-    "lahudky": "Lahůdky",
     "lekarna": "Lékárna",
-    "maso-drubez-a-ryby": "Maso, drůbež a ryby", 
     "mazlicci": "Mazlíčci",
-    "mlecne-vyrobky-a-vejce": "Mléčné výrobky a vejce",
-    "mrazene-a-instantni-potraviny": "Mražené a instant potraviny",
     "nabytek-2": "Nábytek",
-    "nealko-napoje": "Nealkoholické nápoje",
-    "obleceni-a-obuv": "Oblečení a obuv", 
-    "ovoce-a-zelenina": "Ovoce a zelenina",
-    "pecivo": "Pečivo",
+    "obleceni-a-obuv": "Oblečení a obuv",
     "pro-deti": "Pro děti",
-    "sladkosti-a-slane-snacky": "Sladkosti a slané snacky",
     "sport-2": "Sport",
-    "vareni-a-peceni": "Vaření a pečení",
-    "bydleni-a-zahrada": "Bydlení a zahrada", 
-    "zdrava-vyziva": "Zdravá výživa"
+    "zdrava-vyziva": "Zdravá výživa"  # Obsahuje i nefood položky, ignorujeme
 }
 
-# Kategorizace podle typu (potraviny vs nepotravinářské zboží)
-FOOD_CATEGORIES = {
-    "alkohol", "konzervy", "lahudky", "maso-drubez-a-ryby", 
-    "mlecne-vyrobky-a-vejce", "mrazene-a-instantni-potraviny",
-    "nealko-napoje", "ovoce-a-zelenina", "pecivo", 
-    "sladkosti-a-slane-snacky", "vareni-a-peceni", "zdrava-vyziva"
-}
+VALID_SHOPS = ["albert", "lidl", "kaufland", "billa", "penny", "globus"]
 
-NON_FOOD_CATEGORIES = {
-    "auto-moto", "domacnost", "drogerie", "elektro", "hracky-2",
-    "kancelarske-potreby-a-knihy-2", "krasa", "lekarna", "mazlicci",
-    "nabytek-2", "obleceni-a-obuv", "pro-deti", "sport-2", "bydleni-a-zahrada"
-}
+# =============================================================================
+# Pydantic modely
+# =============================================================================
 
-# -----------------------------------------------------------------------------
-# Models
-# -----------------------------------------------------------------------------
 class Product(BaseModel):
+    """Produkt ze scraperu."""
     name: str = Field(..., description="Název produktu")
-    shops: List[str] = Field(..., description="Seznam obchodů")
-    prices: List[str] = Field(..., description="Ceny")
-    amounts: List[str] = Field(..., description="Množství")
-    validities: List[str] = Field(..., description="Platnost")
-    category: Optional[str] = Field(None, description="Kupiapi kategorie")
-    category_display: Optional[str] = Field(None, description="Zobrazovaný název kategorie")
+    shops: List[str] = Field(default_factory=list, description="Seznam obchodů")
+    prices: List[str] = Field(default_factory=list, description="Ceny")
+    amounts: List[str] = Field(default_factory=list, description="Množství")
+    validities: List[str] = Field(default_factory=list, description="Platnost")
+    category: str = Field(..., description="Kategorie produktu (nativní z kupi.cz)")
+    category_display: str = Field(..., description="Zobrazovaný název kategorie")
     is_food: bool = Field(True, description="Zda jde o potravinu")
 
+
+class ETLProduct(BaseModel):
+    """Produkt připravený pro ETL - rozšířená data."""
+    name: str
+    price: Optional[float] = None
+    original_price: Optional[float] = None  # Není dostupné z kupi.cz
+    discount_percentage: Optional[float] = None  # Není dostupné z kupi.cz
+    shop_name: str
+    category: str
+    category_display: str
+    unit: Optional[str] = None
+    valid_from: Optional[str] = None
+    valid_until: Optional[str] = None
+    is_food: bool = True
+    image_url: Optional[str] = None
+
+
 class DiscountsResponse(BaseModel):
+    """Odpověď s produkty."""
     products: List[Product]
     total_count: int
     category_counts: Dict[str, int] = Field(default_factory=dict)
     shop_counts: Dict[str, int] = Field(default_factory=dict)
 
-# -----------------------------------------------------------------------------
-# Helper functions
-# -----------------------------------------------------------------------------
 
-def get_products_by_shop_and_category(shop: str, category: Optional[str] = None, max_pages: int = 1) -> List[Dict]:
+class ETLResponse(BaseModel):
+    """Odpověď pro ETL endpoint."""
+    products: List[ETLProduct]
+    total_count: int
+    categories_fetched: List[str]
+    shops_fetched: List[str]
+    fetched_at: str
+
+
+class CategoryETLResponse(BaseModel):
+    """Odpověď pro ETL endpoint - konkrétní kategorie."""
+    products: List[ETLProduct]
+    total_count: int
+    category: str
+    category_display: str
+    fetched_at: str
+
+
+# =============================================================================
+# Pomocné funkce - Parsování
+# =============================================================================
+
+def parse_price(price_str: str) -> Optional[float]:
+    """Parsuje cenu z textového formátu."""
+    if not price_str:
+        return None
+    try:
+        # Odstranění měny a formátování
+        cleaned = re.sub(r'[^\d,.]', '', price_str)
+        cleaned = cleaned.replace(',', '.')
+        return float(cleaned) if cleaned else None
+    except:
+        return None
+
+
+def parse_validity(validity_str: str) -> tuple[Optional[str], Optional[str]]:
     """
-    Získá produkty z kupiapi pro daný obchod a volitelně kategorii.
-    Používá workaround pro bug v get_discounts_by_category.
+    Parsuje platnost slevy z textu.
+    Vrací: (valid_from, valid_until) ve formátu YYYY-MM-DD
+    """
+    if not validity_str:
+        today = date.today()
+        return today.isoformat(), (today + timedelta(days=7)).isoformat()
+    
+    try:
+        # Formáty: "od 20.1. do 26.1.", "čt 29. 1. – ne 1. 2.", "platí do 26.1."
+        date_pattern = r'(\d{1,2})\.\s*(\d{1,2})\.?\s*(\d{4})?'
+        matches = re.findall(date_pattern, validity_str)
+        
+        current_year = date.today().year
+        
+        if len(matches) >= 2:
+            # Máme od-do
+            day1, month1, year1 = matches[0]
+            day2, month2, year2 = matches[1]
+            
+            year1 = int(year1) if year1 else current_year
+            year2 = int(year2) if year2 else current_year
+            
+            # Pokud je měsíc "do" menší než měsíc "od", jsme přes rok
+            if int(month2) < int(month1):
+                year2 = year1 + 1
+            
+            valid_from = date(year1, int(month1), int(day1))
+            valid_until = date(year2, int(month2), int(day2))
+            
+            return valid_from.isoformat(), valid_until.isoformat()
+            
+        elif len(matches) == 1:
+            # Jen jedno datum - předpokládáme konec
+            day, month, year = matches[0]
+            year = int(year) if year else current_year
+            valid_until = date(year, int(month), int(day))
+            valid_from = date.today()
+            
+            return valid_from.isoformat(), valid_until.isoformat()
+            
+    except Exception as e:
+        logger.debug(f"Chyba při parsování platnosti '{validity_str}': {e}")
+    
+    # Fallback
+    today = date.today()
+    return today.isoformat(), (today + timedelta(days=7)).isoformat()
+
+
+# =============================================================================
+# Scraper funkce - NOVÝ PŘÍSTUP: fetchování podle kategorií
+# =============================================================================
+
+def get_products_by_category(category: str, max_pages: int = 0) -> List[Dict]:
+    """
+    Získá produkty z kupiapi pro danou kategorii.
+    
+    Args:
+        category: ID kategorie z kupi.cz (např. "maso-drubez-a-ryby")
+        max_pages: Počet stránek (0 = všechny)
     """
     try:
-        if category and category in KUPIAPI_CATEGORIES:
-            # Pokusíme se použít kategorii - pokud selže, použijeme všechny produkty
-            try:
-                # Workaround pro bug - používáme get_discounts_by_shop a filtrujeme
-                products_json = scraper.get_discounts_by_shop(shop, max_pages=max_pages)
-                products = json.loads(products_json)
-                # Pro teď vrátíme všechny produkty - ideálně bychom filtrovali podle kategorie
-                return products
-            except Exception as e:
-                print(f"Error getting products by category {category}: {e}")
-                # Fallback na všechny produkty
-                products_json = scraper.get_discounts_by_shop(shop, max_pages=max_pages)
-                return json.loads(products_json)
-        else:
-            # Získáme všechny produkty
-            products_json = scraper.get_discounts_by_shop(shop, max_pages=max_pages)
-            return json.loads(products_json)
+        products_json = scraper.get_discounts_by_category(category, max_pages=max_pages)
+        return json.loads(products_json)
     except Exception as e:
-        print(f"Error getting products for shop {shop}: {e}")
+        logger.error(f"Chyba při získávání produktů z kategorie {category}: {e}")
         return []
 
-def categorize_product_by_name(product_name: str) -> Optional[str]:
-    """
-    Vylepšená klasifikace produktu podle názvu do kupiapi kategorií.
-    Používá prioritní pořadí pro lepší rozpoznávání nepotravinářských produktů.
-    """
-    name_lower = product_name.lower()
-    
-    # PRIORITA 1: Nepotravinářské kategorie (musí být první!)
-    
-    # Dětské produkty (pleny, atd.)
-    if any(word in name_lower for word in ["pleny", "pleničky", "pampers", "huggies", "kojenecká", "dětská", "baby"]):
-        return "pro-deti"
-    
-    # Drogerie a hygiena  
-    if any(word in name_lower for word in ["šampon", "mýdlo", "pasta", "kartáček", "čistič", "prací", "aviváž", "toaletní", "hygien", "sprchový gel", "deodorant", "parfém", "krém"]):
-        return "drogerie"
-        
-    # Domácnost a čisticí prostředky
-    if any(word in name_lower for word in ["prostředek na", "jar", "fairy", "saponát", "prachovka", "hadřík", "sáček", "folie", "papír", "utěrka", "domácnost", "cif", "domestos", "wc gel"]):
-        return "domacnost"
-        
-    # Elektronika a technika
-    if any(word in name_lower for word in ["led světlo", "led řetez", "led světelný", "kabel", "baterie", "elektronik", "náhradní díl", "žárovka", "svítidlo"]):
-        return "elektro"
-    
-    # Auto-moto
-    if any(word in name_lower for word in ["motorový olej", "antifreeze", "autokosmetika", "pneumatiky", "auto"]):
-        return "auto-moto"
-        
-    # Oblečení
-    if any(word in name_lower for word in ["tričko", "kalhoty", "ponožky", "boty", "oblečení", "textil"]):
-        return "obleceni-a-obuv"
-    
-    # Hračky
-    if any(word in name_lower for word in ["hračka", "lego", "panenka", "autíčko", "hra", "puzzle"]):
-        return "hracky-2"
-        
-    # PRIORITA 2: Alkohol (před ostatními nápoji!)
-    if any(word in name_lower for word in ["víno", "pivo", "vodka", "rum", "whisky", "gin", "brandy", "koňak", "liqueur", "likér", "vermut", "prosecco", "champagne", "šampus", "jägermeister"]):
-        return "alkohol"
-    
-    # PRIORITA 3: Potraviny
-    
-    # Maso, drůbež, ryby
-    if any(word in name_lower for word in ["maso", "hovězí", "vepřové", "kuřecí", "krůtí", "ryba", "losos", "tuňák", "sardinka", "uzené", "šunka", "salám", "párek", "klobása", "uzenina"]):
-        return "maso-drubez-a-ryby"
-        
-    # Mléčné výrobky
-    if any(word in name_lower for word in ["mléko", "sýr", "jogurt", "tvaroh", "máslo", "smetana", "kefír", "eidam", "gouda", "mozzarella", "parmezan", "sýrová", "mléčný"]):
-        return "mlecne-vyrobky-a-vejce"
-        
-    # Ovoce a zelenina
-    if any(word in name_lower for word in ["jablko", "banán", "pomeranč", "citron", "jahoda", "brambory", "mrkev", "cibule", "paprika", "rajče", "okurka", "salát", "zelenina", "ovoce"]):
-        return "ovoce-a-zelenina"
-        
-    # Pečivo
-    if any(word in name_lower for word in ["chléb", "rohlík", "bageta", "houska", "croissant", "toustový", "pečivo"]):
-        return "pecivo"
-        
-    # Sladkosti
-    if any(word in name_lower for word in ["čokoláda", "bonbon", "sušenka", "dort", "zmrzlina", "pudink", "sladkosti", "milka", "orion", "granko"]):
-        return "sladkosti-a-slane-snacky"
-        
-    # Nealkoholické nápoje (káva, čaj, nealkohol)
-    if any(word in name_lower for word in ["cola", "pepsi", "sprite", "fanta", "limonáda", "džus", "voda", "čaj", "káva", "kofola", "magnesia", "kapsle", "nescafé", "dolce gusto"]):
-        return "nealko-napoje"
-        
-    # Mražené
-    if any(word in name_lower for word in ["mražen", "zmražen", "deep", "iglo", "bonduelle mražen"]):
-        return "mrazene-a-instantni-potraviny"
-        
-    # Konzervy
-    if any(word in name_lower for word in ["konzerva", "konzervovaný", "sterilovaný"]):
-        return "konzervy"
-    
-    # Varení a pečení (koření, omáčky, atd.)
-    if any(word in name_lower for word in ["omáčka", "koření", "sůl", "cukr", "mouka", "olej", "ocet", "hellmann", "tatarská", "kečup", "hořčice"]):
-        return "vareni-a-peceni"
-        
-    # Zdravá výživa (fallback pro nerozpoznané potraviny)
-    return "zdrava-vyziva"
 
-def enrich_product_with_category(product_data: Dict) -> Product:
+def get_products_by_category_and_shop(category: str, shop: str, max_pages: int = 0) -> List[Dict]:
     """
-    Obohatí produkt o informace o kategorii.
+    Získá produkty z kupiapi pro danou kategorii a obchod.
+    
+    Args:
+        category: ID kategorie z kupi.cz
+        shop: Název obchodu (lidl, albert, ...)
+        max_pages: Počet stránek (0 = všechny)
     """
-    # Zkusíme klasifikovat podle názvu
-    category = categorize_product_by_name(product_data["name"])
+    try:
+        products_json = scraper.get_discounts_by_category_shop(category, shop, max_pages=max_pages)
+        return json.loads(products_json)
+    except Exception as e:
+        logger.error(f"Chyba při získávání produktů z {category}/{shop}: {e}")
+        return []
+
+
+def get_products_by_shop(shop: str, max_pages: int = 1) -> List[Dict]:
+    """Získá produkty z kupiapi pro daný obchod (starý způsob)."""
+    try:
+        products_json = scraper.get_discounts_by_shop(shop, max_pages=max_pages)
+        return json.loads(products_json)
+    except Exception as e:
+        logger.error(f"Chyba při získávání produktů z {shop}: {e}")
+        return []
+
+
+def enrich_product(product_data: Dict, category: str, category_display: str) -> Product:
+    """Obohatí produkt o kategorii."""
+    name = product_data.get("name", "")
     
-    # Určíme display název
-    category_display = CATEGORY_DISPLAY_NAMES.get(category, category) if category else "Neznámá kategorie"
-    
-    # Určíme zda je to potravina
-    is_food = category in FOOD_CATEGORIES if category else True
-    
-    # Ošetříme None hodnoty v datech
-    safe_amounts = product_data.get("amounts", [])
-    if safe_amounts is None:
-        safe_amounts = []
-    # Převedeme None hodnoty na prázdné stringy
-    safe_amounts = [str(amount) if amount is not None else "" for amount in safe_amounts]
-    
-    safe_validities = product_data.get("validities", [])
-    if safe_validities is None:
-        safe_validities = []
-    safe_validities = [str(validity) if validity is not None else "" for validity in safe_validities]
-    
-    safe_prices = product_data.get("prices", [])
-    if safe_prices is None:
-        safe_prices = []
-    safe_prices = [str(price) if price is not None else "" for price in safe_prices]
-    
-    safe_shops = product_data.get("shops", [])
-    if safe_shops is None:
-        safe_shops = []
-    safe_shops = [str(shop) if shop is not None else "" for shop in safe_shops]
+    def safe_list(data, key):
+        val = data.get(key, [])
+        if val is None:
+            return []
+        return [str(v) if v is not None else "" for v in val]
     
     return Product(
-        name=product_data.get("name", ""),
-        shops=safe_shops,
-        prices=safe_prices, 
-        amounts=safe_amounts,
-        validities=safe_validities,
+        name=name,
+        shops=safe_list(product_data, "shops"),
+        prices=safe_list(product_data, "prices"),
+        amounts=safe_list(product_data, "amounts"),
+        validities=safe_list(product_data, "validities"),
         category=category,
         category_display=category_display,
-        is_food=is_food
+        is_food=True  # Pouze food kategorie
     )
 
-# -----------------------------------------------------------------------------
-# API Endpoints
-# -----------------------------------------------------------------------------
 
-@app.get("/", summary="Health check")
-async def root():
-    return {"status": "KupiAPI Bridge v2.0 - Using native kupiapi categories"}
-
-@app.get("/categories", summary="Získat dostupné kategorie")
-async def get_categories():
+def convert_to_etl_product(product_data: Dict, category: str, category_display: str) -> List[ETLProduct]:
     """
-    Vrátí seznam všech dostupných kupiapi kategorií.
+    Konvertuje raw produkt na seznam ETLProduct (jeden pro každý obchod/cenu).
     
-    Vrací:
-    - **categories**: Seznam kategorií s ID, přátelským názvem a označením food/non-food
-    - **food_categories**: Seznam pouze potravinářských kategorií 
-    - **non_food_categories**: Seznam pouze nepotravinářských kategorií
-    
-    Každá kategorie obsahuje:
-    - `id`: Originální kupiapi kategorie (např. "maso-drubez-a-ryby")
-    - `name`: Přátelský název v češtině (např. "Maso, drůbež a ryby")
-    - `is_food`: Boolean označující zda jde o potravinu
+    Kupiapi vrací produkt s více cenami/obchody - musíme je rozdělit.
     """
-    categories = []
-    for category in KUPIAPI_CATEGORIES:
-        categories.append({
-            "id": category,
-            "name": CATEGORY_DISPLAY_NAMES.get(category, category),
-            "is_food": category in FOOD_CATEGORIES
-        })
-    
-    return {
-        "categories": categories,
-        "food_categories": list(FOOD_CATEGORIES),
-        "non_food_categories": list(NON_FOOD_CATEGORIES)
-    }
-
-@app.get("/discounts/{shop}", response_model=DiscountsResponse, summary="Získat slevy pro obchod")
-async def get_discounts_by_shop(
-    shop: str,
-    category: Optional[str] = Query(None, description="Filtr podle kupiapi kategorie (např. 'maso-drubez-a-ryby')"),
-    food_only: bool = Query(False, description="Zobrazit pouze potravinářské produkty (is_food=true)"),
-    max_pages: int = Query(1, ge=1, le=5, description="Počet stránek ke stažení (1-5)")
-):
-    """
-    Získá aktuální slevy pro konkrétní obchod s pokročilými filtry.
-    
-    **Podporované obchody:** albert, lidl, kaufland, billa, penny, globus
-    
-    **Parametry:**
-    - `shop`: Název obchodu (povinné)
-    - `category`: Kupiapi kategorie pro filtraci (volitelné, např. "alkohol", "drogerie")
-    - `food_only`: Pouze potravinářské produkty (volitelné, default false)
-    - `max_pages`: Počet stránek dat k načtení (1-5, default 1)
-    
-    **Vrací:**
-    - Seznam produktů s názvy, cenami, obchody, platností
-    - Každý produkt má automaticky přiřazenou kategorii a označení food/non-food
-    - Statistiky počtu produktů podle kategorií a obchodů
-    
-    **Příklady použití:**
-    - `/discounts/albert` - všechny slevy z Alberta
-    - `/discounts/albert?food_only=true` - pouze potraviny z Alberta  
-    - `/discounts/albert?category=alkohol` - pouze alkohol z Alberta
-    """
-    
-    # Validace obchodu
-    valid_shops = ["albert", "lidl", "kaufland", "billa", "penny", "globus"]
-    if shop not in valid_shops:
-        raise HTTPException(status_code=400, detail=f"Neplatný obchod. Povolené: {valid_shops}")
-    
-    # Validace kategorie
-    if category and category not in KUPIAPI_CATEGORIES:
-        raise HTTPException(status_code=400, detail=f"Neplatná kategorie. Povolené: {KUPIAPI_CATEGORIES}")
-    
     try:
-        # Získáme produkty
-        raw_products = get_products_by_shop_and_category(shop, category, max_pages)
+        name = product_data.get("name", "").strip()
+        if not name:
+            return []
         
-        # Obohatíme o kategorie
-        enriched_products = []
-        category_counts = {}
-        shop_counts = {}
+        shops = product_data.get("shops", [])
+        prices = product_data.get("prices", [])
+        amounts = product_data.get("amounts", [])
+        validities = product_data.get("validities", [])
         
-        for product_data in raw_products:
-            product = enrich_product_with_category(product_data)
-            
-            # Aplikujeme filtry
-            if food_only and not product.is_food:
+        if not shops or not prices:
+            return []
+        
+        results = []
+        
+        # Iterujeme přes všechny obchody/ceny
+        for i, shop in enumerate(shops):
+            if not shop:
                 continue
                 
-            if category and product.category != category:
+            # Získáme odpovídající data
+            price_str = prices[i] if i < len(prices) else prices[0] if prices else None
+            amount_str = amounts[i] if i < len(amounts) else amounts[0] if amounts else None
+            validity_str = validities[i] if i < len(validities) else validities[0] if validities else None
+            
+            price = parse_price(price_str) if price_str else None
+            if not price or price <= 0:
                 continue
             
-            enriched_products.append(product)
+            # Platnost
+            valid_from, valid_until = parse_validity(validity_str)
             
-            # Počítáme statistiky
-            if product.category:
-                category_counts[product.category] = category_counts.get(product.category, 0) + 1
+            # Normalizace názvu obchodu
+            shop_normalized = shop.lower().strip()
+            if shop_normalized not in VALID_SHOPS:
+                # Zkusíme najít shodu
+                for valid_shop in VALID_SHOPS:
+                    if valid_shop in shop_normalized or shop_normalized in valid_shop:
+                        shop_normalized = valid_shop
+                        break
+                else:
+                    # Neznámý obchod - přeskočíme
+                    continue
             
-            for shop_name in product.shops:
-                shop_counts[shop_name] = shop_counts.get(shop_name, 0) + 1
+            results.append(ETLProduct(
+                name=name,
+                price=price,
+                original_price=None,  # Není dostupné z kupi.cz
+                discount_percentage=None,  # Není dostupné z kupi.cz
+                shop_name=shop_normalized,
+                category=category,
+                category_display=category_display,
+                unit=amount_str,
+                valid_from=valid_from,
+                valid_until=valid_until,
+                is_food=True,
+                image_url=None
+            ))
+        
+        return results
+        
+    except Exception as e:
+        logger.debug(f"Chyba při konverzi produktu: {e}")
+        return []
+
+
+# =============================================================================
+# API Endpoints
+# =============================================================================
+
+@app.get("/", summary="Root endpoint")
+async def root():
+    """Root endpoint s informacemi o API."""
+    return {
+        "service": "BudgetBites KupiAPI Bridge",
+        "version": "3.0.0",
+        "status": "running",
+        "note": "V3 používá nativní kategorie z kupi.cz místo heuristiky",
+        "endpoints": {
+            "health": "/health",
+            "categories": "/categories",
+            "discounts_by_category": "/discounts/category/{category}",
+            "discounts_by_shop": "/discounts/shop/{shop}",
+            "etl": "/v1/discounts/etl",
+            "etl_by_category": "/v1/discounts/category/{category}/etl"
+        }
+    }
+
+
+@app.get("/health", summary="Health check")
+async def health_check():
+    """Health check endpoint pro Docker healthcheck."""
+    return {"status": "healthy", "timestamp": datetime.now(TZ).isoformat()}
+
+
+@app.get("/categories", summary="Seznam kategorií")
+async def get_categories():
+    """Vrátí seznam všech dostupných kategorií."""
+    food_cats = [{"id": k, "name": v, "is_food": True} for k, v in FOOD_CATEGORIES.items()]
+    non_food_cats = [{"id": k, "name": v, "is_food": False} for k, v in NON_FOOD_CATEGORIES.items()]
+    
+    return {
+        "categories": sorted(food_cats + non_food_cats, key=lambda x: x["id"]),
+        "food_categories": sorted(list(FOOD_CATEGORIES.keys())),
+        "non_food_categories": sorted(list(NON_FOOD_CATEGORIES.keys())),
+        "shops": VALID_SHOPS
+    }
+
+
+@app.get("/discounts/category/{category}", response_model=DiscountsResponse, summary="Slevy podle kategorie")
+async def get_discounts_by_category(
+    category: str,
+    max_pages: int = Query(1, ge=1, le=5, description="Počet stránek (1-5)")
+):
+    """
+    Získá aktuální slevy pro konkrétní kategorii.
+    
+    **Toto je preferovaný způsob** - kategorie je nativní z kupi.cz.
+    """
+    all_categories = {**FOOD_CATEGORIES, **NON_FOOD_CATEGORIES}
+    if category not in all_categories:
+        raise HTTPException(status_code=400, detail=f"Neplatná kategorie. Povolené: {list(all_categories.keys())}")
+    
+    try:
+        raw_products = get_products_by_category(category, max_pages)
+        
+        products = []
+        shop_counts: Dict[str, int] = {}
+        category_display = all_categories[category]
+        is_food = category in FOOD_CATEGORIES
+        
+        for product_data in raw_products:
+            product = Product(
+                name=product_data.get("name", ""),
+                shops=[s for s in product_data.get("shops", []) if s],
+                prices=[p for p in product_data.get("prices", []) if p],
+                amounts=[a for a in product_data.get("amounts", []) if a],
+                validities=[v for v in product_data.get("validities", []) if v],
+                category=category,
+                category_display=category_display,
+                is_food=is_food
+            )
+            products.append(product)
+            
+            for shop in product.shops:
+                shop_lower = shop.lower()
+                shop_counts[shop_lower] = shop_counts.get(shop_lower, 0) + 1
         
         return DiscountsResponse(
-            products=enriched_products,
-            total_count=len(enriched_products),
-            category_counts=category_counts,
+            products=products,
+            total_count=len(products),
+            category_counts={category: len(products)},
             shop_counts=shop_counts
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Chyba při získávání slev: {str(e)}")
+        logger.error(f"Chyba při získávání slev z kategorie {category}: {e}")
+        raise HTTPException(status_code=500, detail=f"Chyba: {str(e)}")
 
-@app.get("/discounts", response_model=DiscountsResponse, summary="Získat slevy ze všech obchodů")
-async def get_all_discounts(
-    category: Optional[str] = Query(None, description="Filtr kategorie"),
-    food_only: bool = Query(False, description="Pouze potraviny"),
-    max_pages: int = Query(1, ge=1, le=3, description="Maximální počet stránek na obchod")
+
+@app.get("/discounts/shop/{shop}", response_model=DiscountsResponse, summary="Slevy z obchodu (starý způsob)")
+async def get_discounts_by_shop_endpoint(
+    shop: str,
+    max_pages: int = Query(1, ge=1, le=5, description="Počet stránek (1-5)")
 ):
     """
-    Získá slevy ze všech podporovaných obchodů.
-    """
-    shops = ["albert", "lidl", "kaufland", "billa", "penny", "globus"]
-    all_products = []
-    category_counts = {}
-    shop_counts = {}
+    Získá aktuální slevy pro konkrétní obchod.
     
-    for shop in shops:
+    **POZOR:** Tento endpoint NEMÁ správné kategorie - produkty nemají nativní kategorii z kupi.cz.
+    Pro správné kategorie použijte `/discounts/category/{category}`.
+    """
+    if shop not in VALID_SHOPS:
+        raise HTTPException(status_code=400, detail=f"Neplatný obchod. Povolené: {VALID_SHOPS}")
+    
+    try:
+        raw_products = get_products_by_shop(shop, max_pages)
+        
+        products = []
+        
+        for product_data in raw_products:
+            product = Product(
+                name=product_data.get("name", ""),
+                shops=[s for s in product_data.get("shops", []) if s],
+                prices=[p for p in product_data.get("prices", []) if p],
+                amounts=[a for a in product_data.get("amounts", []) if a],
+                validities=[v for v in product_data.get("validities", []) if v],
+                category="unknown",  # Nemáme kategorii při fetchování podle obchodu!
+                category_display="Neznámá kategorie",
+                is_food=True  # Předpokládáme potravinu
+            )
+            products.append(product)
+        
+        return DiscountsResponse(
+            products=products,
+            total_count=len(products),
+            category_counts={"unknown": len(products)},
+            shop_counts={shop: len(products)}
+        )
+        
+    except Exception as e:
+        logger.error(f"Chyba při získávání slev z {shop}: {e}")
+        raise HTTPException(status_code=500, detail=f"Chyba: {str(e)}")
+
+
+# =============================================================================
+# ETL Endpoints - pro ETL službu
+# =============================================================================
+
+@app.get("/v1/discounts/etl", response_model=ETLResponse, summary="ETL endpoint - všechny potravinové kategorie")
+async def get_all_food_discounts_for_etl(
+    max_pages_per_category: int = Query(3, ge=1, le=10, description="Stránek na kategorii")
+):
+    """
+    Hlavní ETL endpoint - vrací produkty ze VŠECH potravinových kategorií.
+    
+    Tento endpoint je preferovaný pro ETL službu, protože:
+    - Fetchuje podle nativních kategorií z kupi.cz
+    - Automaticky přiřazuje správnou kategorii každému produktu
+    - Filtruje pouze potravinové kategorie
+    
+    **Poznámka:** original_price a discount_percentage nejsou dostupné z kupi.cz
+    """
+    all_products: List[ETLProduct] = []
+    categories_fetched: List[str] = []
+    shops_found: set = set()
+    
+    for category_id, category_name in FOOD_CATEGORIES.items():
         try:
-            raw_products = get_products_by_shop_and_category(shop, category, max_pages)
+            logger.info(f"Fetchuji kategorii: {category_id}")
+            raw_products = get_products_by_category(category_id, max_pages=max_pages_per_category)
             
             for product_data in raw_products:
-                product = enrich_product_with_category(product_data)
+                etl_products = convert_to_etl_product(product_data, category_id, category_name)
+                all_products.extend(etl_products)
                 
-                # Aplikujeme filtry
-                if food_only and not product.is_food:
-                    continue
-                    
-                if category and product.category != category:
-                    continue
-                
-                all_products.append(product)
-                
-                # Počítáme statistiky
-                if product.category:
-                    category_counts[product.category] = category_counts.get(product.category, 0) + 1
-                
-                for shop_name in product.shops:
-                    shop_counts[shop_name] = shop_counts.get(shop_name, 0) + 1
-                    
+                for p in etl_products:
+                    shops_found.add(p.shop_name)
+            
+            categories_fetched.append(category_id)
+            logger.info(f"Kategorie {category_id}: {len(raw_products)} raw produktů")
+            
         except Exception as e:
-            print(f"Chyba při načítání z obchodu {shop}: {e}")
-            continue
+            logger.error(f"Chyba při fetchování kategorie {category_id}: {e}")
     
-    return DiscountsResponse(
+    logger.info(f"ETL celkem: {len(all_products)} produktů z {len(categories_fetched)} kategorií")
+    
+    return ETLResponse(
         products=all_products,
         total_count=len(all_products),
-        category_counts=category_counts,
-        shop_counts=shop_counts
+        categories_fetched=categories_fetched,
+        shops_fetched=sorted(list(shops_found)),
+        fetched_at=datetime.now(TZ).isoformat()
     )
 
-# Endpoint pro ETL proces
-@app.get("/etl", summary="ETL endpoint pro pravidelné stahování")
-async def etl_endpoint():
+
+@app.get("/v1/discounts/category/{category}/etl", response_model=CategoryETLResponse, summary="ETL endpoint - konkrétní kategorie")
+async def get_category_discounts_for_etl(
+    category: str,
+    max_pages: int = Query(0, ge=0, le=10, description="Počet stránek (0 = všechny)")
+):
     """
-    Endpoint pro ETL proces - získá slevy ze všech obchodů pro uložení do databáze.
+    ETL endpoint pro konkrétní kategorii.
+    
+    Vhodné pro inkrementální ETL nebo testování.
     """
-    return await get_all_discounts(max_pages=2)
+    if category not in FOOD_CATEGORIES:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Neplatná potravinová kategorie. Povolené: {list(FOOD_CATEGORIES.keys())}"
+        )
+    
+    try:
+        category_name = FOOD_CATEGORIES[category]
+        raw_products = get_products_by_category(category, max_pages=max_pages if max_pages > 0 else 5)
+        
+        etl_products = []
+        for product_data in raw_products:
+            products = convert_to_etl_product(product_data, category, category_name)
+            etl_products.extend(products)
+        
+        logger.info(f"ETL {category}: {len(etl_products)} produktů připraveno")
+        
+        return CategoryETLResponse(
+            products=etl_products,
+            total_count=len(etl_products),
+            category=category,
+            category_display=category_name,
+            fetched_at=datetime.now(TZ).isoformat()
+        )
+        
+    except Exception as e:
+        logger.error(f"ETL chyba pro kategorii {category}: {e}")
+        raise HTTPException(status_code=500, detail=f"ETL chyba: {str(e)}")
+
+
+# Zachováme starý endpoint pro zpětnou kompatibilitu (deprecated)
+@app.get("/v1/discounts/store/{shop}/etl", deprecated=True, summary="[DEPRECATED] ETL endpoint podle obchodu")
+async def get_shop_discounts_for_etl_deprecated(
+    shop: str,
+    food_only: bool = Query(True),
+    max_pages: int = Query(0, ge=0, le=10)
+):
+    """
+    **DEPRECATED:** Tento endpoint nemá správné kategorie!
+    
+    Použijte místo něj `/v1/discounts/etl` pro správné kategorie z kupi.cz.
+    """
+    return {
+        "error": "deprecated",
+        "message": "Tento endpoint je zastaralý. Použijte /v1/discounts/etl pro správné kategorie z kupi.cz",
+        "new_endpoint": "/v1/discounts/etl"
+    }
+
+
+# =============================================================================
+# Main
+# =============================================================================
 
 if __name__ == "__main__":
     import uvicorn

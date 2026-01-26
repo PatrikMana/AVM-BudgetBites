@@ -1,19 +1,16 @@
 # BudgetBites ETL Service - Python Dependencies
 
 # Asynchronní PostgreSQL driver
-asyncpg==0.29.0
+asyncpg>=0.29.0
 
-# HTTP klient pro komunikaci s FastAPI
-aiohttp==3.9.1
+# HTTP klient pro komunikaci s FastAPI (včetně web serveru)
+aiohttp>=3.9.1
 
 # Scheduler pro periodické spouštění ETL
-APScheduler==3.10.4
+APScheduler>=3.10.4
 
 # System monitoring
-psutil==5.9.6
+psutil>=5.9.6
 
-# Timezone handling
-pytz==2023.3
-
-# JSON handling (už v Python stdlib, ale pro jistotu)
-# orjson==3.9.10  # rychlejší JSON parser (volitelné)
+# Timezone handling (pro APScheduler)
+pytz>=2023.3
