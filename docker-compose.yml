@@ -56,7 +56,7 @@ services:
       dockerfile: Dockerfile
     container_name: budgetbites-etl
     ports:
-      - "8080:8080"  # HTTP API pro manuální trigger
+      - "8081:8081"  # HTTP API pro manuální trigger
     environment:
       - TZ=Europe/Prague
       - DB_HOST=budgetbites-postgres
