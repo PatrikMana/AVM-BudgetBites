@@ -20,11 +20,11 @@ import { cn } from "../lib/utils";
 import { format } from "date-fns";
 
 const dietOptions = [
-  { id: "gluten-free", label: "Bezlepková dieta", icon: Wheat },
-  { id: "lactose-free", label: "Bezlaktózová dieta", icon: Milk },
-  { id: "nut-allergy", label: "Alergie na ořechy", icon: AlertCircle },
-  { id: "egg-allergy", label: "Alergie na vejce", icon: AlertCircle },
-  { id: "soy-allergy", label: "Alergie na sóju", icon: AlertCircle },
+  { id: "gluten-free", label: "Gluten-free diet", icon: Wheat },
+  { id: "lactose-free", label: "Lactose-free diet", icon: Milk },
+  { id: "nut-allergy", label: "Nut allergy", icon: AlertCircle },
+  { id: "egg-allergy", label: "Egg allergy", icon: AlertCircle },
+  { id: "soy-allergy", label: "Soy allergy", icon: AlertCircle },
 ];
 
 const storeOptions = [
@@ -62,10 +62,10 @@ function getStoreLogoUrl(storeId) {
 }
 
 const mealCountOptions = [
-  { value: 3, label: "3 jídla", description: "Snídaně, oběd, večeře" },
-  { value: 4, label: "4 jídla", description: "+ 1 svačina" },
-  { value: 5, label: "5 jídel", description: "+ 2 svačiny" },
-  { value: 6, label: "6 jídel", description: "+ 3 svačiny" },
+  { value: 3, label: "3 meals", description: "Breakfast, lunch, dinner" },
+  { value: 4, label: "4 meals", description: "+ 1 snack" },
+  { value: 5, label: "5 meals", description: "+ 2 snacks" },
+  { value: 6, label: "6 meals", description: "+ 3 snacks" },
 ];
 
 export default function RecipeGeneratorPanel({ onGenerate }) {
@@ -103,7 +103,7 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
     };
 
     try {
-      // Předání dat rodiči nebo ukázkový fallback:
+      // Pass data to parent or example fallback:
       if (typeof onGenerate === "function") {
         await onGenerate(payload);
       } else {
@@ -123,13 +123,13 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
         <div className="mb-8 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 border border-emerald-500/20">
             <Sparkles className="h-5 w-5 text-emerald-400" />
-            <span className="text-sm font-medium text-emerald-400">Generátor jídelníčku</span>
+            <span className="text-sm font-medium text-emerald-400">Meal Plan Generator</span>
           </div>
           <h1 className="mb-2 text-3xl font-bold tracking-tight text-white md:text-4xl">
-            Vytvořte si svůj zdravý <span className="text-emerald-500">jídelníček</span>
+            Create your healthy <span className="text-emerald-500">meal plan</span>
           </h1>
           <p className="text-zinc-400">
-            Nastavte své preference a nechte nás vytvořit personalizovaný plán stravování
+            Set your preferences and let us create a personalized nutrition plan for you
           </p>
         </div>
 
@@ -141,7 +141,7 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
                 <div className="rounded-lg bg-emerald-500/15 p-2 ring-1 ring-emerald-500/30">
                   <Flame className="h-5 w-5 text-emerald-400" />
                 </div>
-                Kalorie za den
+                Daily Calories
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -173,7 +173,7 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
                 <div className="rounded-lg bg-emerald-500/15 p-2 ring-1 ring-emerald-500/30">
                   <Utensils className="h-5 w-5 text-emerald-400" />
                 </div>
-                Počet jídel za den
+                Meals per Day
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -206,7 +206,7 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
                 <div className="rounded-lg bg-red-500/15 p-2 ring-1 ring-red-500/30">
                   <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
-                Diety a alergie
+                Diets and Allergies
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -248,7 +248,7 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
                 <div className="rounded-lg bg-emerald-500/15 p-2 ring-1 ring-emerald-500/30">
                   <CalendarDays className="h-5 w-5 text-emerald-400" />
                 </div>
-                Kalendář plánování
+                Planning Calendar
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -262,9 +262,9 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
                 />
                 {selectedDates.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="text-sm text-zinc-400">Vybráno:</span>
+                    <span className="text-sm text-zinc-400">Selected:</span>
                     <Badge className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
-                      {selectedDates.length} {selectedDates.length === 1 ? "den" : selectedDates.length < 5 ? "dny" : "dní"}
+                      {selectedDates.length} {selectedDates.length === 1 ? "day" : selectedDates.length < 5 ? "days" : "days"}
                     </Badge>
                   </div>
                 )}
@@ -279,7 +279,7 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
                 <div className="rounded-lg bg-blue-500/15 p-2 ring-1 ring-blue-500/30">
                   <ShoppingBag className="h-5 w-5 text-blue-400" />
                 </div>
-                Obchody
+                Stores
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -333,10 +333,10 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
             className="h-14 px-12 text-lg font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30 transition-all hover:scale-105"
           >
             <Sparkles className="mr-2 h-5 w-5" />
-            {submitting ? "Generuji..." : "Vygenerovat jídelníček"}
+            {submitting ? "Generating..." : "Generate Meal Plan"}
           </Button>
           <p className="mt-3 text-sm text-zinc-400">
-            Na základě vašich preferencí vytvoříme personalizovaný plán
+            Based on your preferences, we will create a personalized plan
           </p>
         </div>
       </div>
