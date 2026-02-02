@@ -1,198 +1,345 @@
 import { useState } from "react";
-import {
-    Sparkles,
-    DollarSign,
-    Zap,
-    ChefHat,
-    Users,
-    Gauge,
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Label } from "./ui/label";
+import { Slider } from "./ui/slider";
+import { Checkbox } from "./ui/checkbox";
+import { Button } from "./ui/button";
+import { Calendar } from "./ui/calendar";
+import { Badge } from "./ui/badge";
+import { 
+  Flame, 
+  Utensils, 
+  ShoppingBag, 
+  CalendarDays,
+  Wheat,
+  Milk,
+  AlertCircle,
+  Sparkles
 } from "lucide-react";
+import { cn } from "../lib/utils";
+import { format } from "date-fns";
 
-export default function RecipeGeneratorPanel({ onGenerate }) {
-    const [form, setForm] = useState({
-        budget: 6,
-        calories: 2,
-        cuisine: "Mediterranean",
-        servings: 6,
-        difficulty: "medium",
-    });
-    const [submitting, setSubmitting] = useState(false);
+const dietOptions = [
+  { id: "gluten-free", label: "Bezlepková dieta", icon: Wheat },
+  { id: "lactose-free", label: "Bezlaktózová dieta", icon: Milk },
+  { id: "nut-allergy", label: "Alergie na ořechy", icon: AlertCircle },
+  { id: "egg-allergy", label: "Alergie na vejce", icon: AlertCircle },
+  { id: "soy-allergy", label: "Alergie na sóju", icon: AlertCircle },
+];
 
-    const cuisineOptions = [
-        "Mediterranean",
-        "Italian",
-        "Mexican",
-        "Indian",
-        "Thai",
-        "Japanese",
-        "Middle Eastern",
-        "American",
-        "Vegetarian",
-        "Vegan",
-    ];
+const storeOptions = [
+  { id: "albert", name: "Albert" },
+  { id: "lidl", name: "Lidl" },
+  { id: "kaufland", name: "Kaufland" },
+  { id: "billa", name: "Billa" },
+  { id: "tesco", name: "Tesco" },
+  { id: "penny", name: "Penny Market"},
+  { id: "globus", name: "Globus" },
+  { id: "makro", name: "Makro" },
+];
 
-    const difficultyOptions = [
-        { value: "easy", label: "Easy (20 min)" },
-        { value: "medium", label: "Medium (45 min)" },
-        { value: "hard", label: "Hard (90+ min)" },
-    ];
+// Mapping store id -> domain used for fetching logos. You can replace the
+// logo provider or these domains with local assets if you prefer.
+const storeDomains = {
+  albert: "albert.cz",
+  lidl: "lidl.cz",
+  kaufland: "kaufland.cz",
+  billa: "billa.com", 
+  tesco: "tesco.com",
+  penny: "penny.cz", format: "png",
+  globus: "globus.cz",
+  makro: "makro.cz",
+};
 
-    const servingOptions = Array.from({ length: 12 }, (_, i) => i + 1);
+// Logo.dev API configuration
+const LOGO_DEV_PUBLIC_KEY = 'pk_VeJUHnpITreru4erioI9Ng';
 
-    function update(name, value) {
-        setForm((f) => ({ ...f, [name]: value }));
-    }
-
-    async function handleSubmit(e) {
-        e.preventDefault();
-        setSubmitting(true);
-        const payload = {
-            ...form,
-            budget: Number(form.budget),
-            calories: Number(form.calories),
-            servings: Number(form.servings),
-        };
-
-        try {
-            // Předání dat rodiči nebo ukázkový fallback:
-            if (typeof onGenerate === "function") {
-                await onGenerate(payload);
-            } else {
-                // fallback demo
-                // eslint-disable-next-line no-alert
-                alert(`Generate with:\n${JSON.stringify(payload, null, 2)}`);
-            }
-        } finally {
-            setSubmitting(false);
-        }
-    }
-
-    return (
-        <div className="mx-auto w-full max-w-3xl p-4 sm:p-6">
-            <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl backdrop-blur">
-                {/* Header */}
-                <div className="mb-6 flex items-start gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600/15 text-emerald-400 ring-1 ring-emerald-500/30">
-                        <Sparkles className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-semibold text-white">Recipe Generator</h2>
-                        <p className="text-sm text-zinc-400">Tell us what you&apos;re craving</p>
-                    </div>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Grid */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        {/* Budget */}
-                        <Field label="Meals/Day" icon={<DollarSign className="h-4 w-4" />}>
-                            <input
-                                type="number"
-                                min={0}
-                                step="0.5"
-                                inputMode="decimal"
-                                className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
-                                value={form.budget}
-                                onChange={(e) => update("budget", e.target.value)}
-                                placeholder="e.g., 10"
-                                aria-label="Maximum Budget in dollars"
-                                required
-                            />
-                        </Field>
-
-                        {/* Calories */}
-                        <Field label="Calories/Day" icon={<Zap className="h-4 w-4" />}>
-                            <input
-                                type="number"
-                                min={0}
-                                step="1"
-                                inputMode="numeric"
-                                className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
-                                value={form.calories}
-                                onChange={(e) => update("calories", e.target.value)}
-                                placeholder="e.g., 500"
-                                aria-label="Maximum calories per serving"
-                                required
-                            />
-                        </Field>
-
-                        {/* Cuisine */}
-                        <Field label="Cuisine Type" icon={<ChefHat className="h-4 w-4" />}>
-                            <select
-                                className="w-full appearance-none rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-emerald-500"
-                                value={form.cuisine}
-                                onChange={(e) => update("cuisine", e.target.value)}
-                                aria-label="Cuisine type"
-                            >
-                                {cuisineOptions.map((c) => (
-                                    <option key={c} value={c}>
-                                        {c}
-                                    </option>
-                                ))}
-                            </select>
-                        </Field>
-
-                        {/* Servings */}
-                        <Field label="Servings" icon={<Users className="h-4 w-4" />}>
-                            <select
-                                className="w-full appearance-none rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-emerald-500"
-                                value={form.servings}
-                                onChange={(e) => update("servings", e.target.value)}
-                                aria-label="Servings"
-                            >
-                                {servingOptions.map((n) => (
-                                    <option key={n} value={n}>
-                                        {n} {n === 1 ? "person" : "people"}
-                                    </option>
-                                ))}
-                            </select>
-                        </Field>
-
-                        {/* Difficulty */}
-                        <Field label="Difficulty" icon={<Gauge className="h-4 w-4" />}>
-                            <select
-                                className="w-full appearance-none rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-emerald-500"
-                                value={form.difficulty}
-                                onChange={(e) => update("difficulty", e.target.value)}
-                                aria-label="Difficulty"
-                            >
-                                {difficultyOptions.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </Field>
-                    </div>
-
-                    {/* Submit */}
-                    <div className="pt-2">
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                            <Sparkles className="h-5 w-5" />
-                            Generate Perfect Recipe
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
+function getStoreLogoUrl(storeId) {
+  const domain = storeDomains[storeId];
+  if (!domain) return null;
+  // Using Logo.dev API for brand logos with the provided token
+  return `https://img.logo.dev/${domain}?token=${LOGO_DEV_PUBLIC_KEY}`;
 }
 
-/** Small labeled field with an icon */
-function Field({ label, icon, children }) {
-    return (
-        <label className="block">
-            <div className="mb-1 flex items-center gap-2 text-sm font-medium text-zinc-300">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-800/80 text-zinc-400 ring-1 ring-white/10">
-          {icon}
-        </span>
-                {label}
-            </div>
-            {children}
-        </label>
+const mealCountOptions = [
+  { value: 3, label: "3 jídla", description: "Snídaně, oběd, večeře" },
+  { value: 4, label: "4 jídla", description: "+ 1 svačina" },
+  { value: 5, label: "5 jídel", description: "+ 2 svačiny" },
+  { value: 6, label: "6 jídel", description: "+ 3 svačiny" },
+];
+
+export default function RecipeGeneratorPanel({ onGenerate }) {
+  const [calories, setCalories] = useState([2000]);
+  const [mealCount, setMealCount] = useState(3);
+  const [selectedDiets, setSelectedDiets] = useState([]);
+  const [selectedStores, setSelectedStores] = useState([]);
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const toggleDiet = (dietId) => {
+    setSelectedDiets((prev) =>
+      prev.includes(dietId)
+        ? prev.filter((id) => id !== dietId)
+        : [...prev, dietId]
     );
+  };
+
+  const toggleStore = (storeId) => {
+    setSelectedStores((prev) =>
+      prev.includes(storeId)
+        ? prev.filter((id) => id !== storeId)
+        : [...prev, storeId]
+    );
+  };
+
+  const handleGenerate = async () => {
+    setSubmitting(true);
+    const payload = {
+      calories: calories[0],
+      mealCount,
+      selectedDiets,
+      selectedStores,
+      selectedDates,
+    };
+
+    try {
+      // Předání dat rodiči nebo ukázkový fallback:
+      if (typeof onGenerate === "function") {
+        await onGenerate(payload);
+      } else {
+        // fallback demo
+        console.log(payload);
+        alert(`Generate with:\n${JSON.stringify(payload, null, 2)}`);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 p-4 md:p-8">
+      <div className="mx-auto max-w-6xl">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 border border-emerald-500/20">
+            <Sparkles className="h-5 w-5 text-emerald-400" />
+            <span className="text-sm font-medium text-emerald-400">Generátor jídelníčku</span>
+          </div>
+          <h1 className="mb-2 text-3xl font-bold tracking-tight text-white md:text-4xl">
+            Vytvořte si svůj zdravý <span className="text-emerald-500">jídelníček</span>
+          </h1>
+          <p className="text-zinc-400">
+            Nastavte své preference a nechte nás vytvořit personalizovaný plán stravování
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* Calories Card */}
+          <Card className="bg-zinc-900/80 border-white/10 backdrop-blur transition-all hover:border-emerald-500/50 shadow-xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg text-white">
+                <div className="rounded-lg bg-emerald-500/15 p-2 ring-1 ring-emerald-500/30">
+                  <Flame className="h-5 w-5 text-emerald-400" />
+                </div>
+                Kalorie za den
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-center">
+                  <span className="text-4xl font-bold text-emerald-500">{calories[0]}</span>
+                  <span className="ml-1 text-zinc-400">kcal</span>
+                </div>
+                <Slider
+                  value={calories}
+                  onValueChange={setCalories}
+                  min={1000}
+                  max={4000}
+                  step={50}
+                  className="mt-4 [&_.slider-thumb]:bg-emerald-500 [&_.slider-thumb]:border-emerald-500 [&_.slider-range]:bg-emerald-500"
+                />
+                <div className="flex justify-between text-sm text-zinc-500">
+                  <span>1000 kcal</span>
+                  <span>4000 kcal</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Meal Count Card */}
+          <Card className="bg-zinc-900/80 border-white/10 backdrop-blur transition-all hover:border-emerald-500/50 shadow-xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg text-white">
+                <div className="rounded-lg bg-emerald-500/15 p-2 ring-1 ring-emerald-500/30">
+                  <Utensils className="h-5 w-5 text-emerald-400" />
+                </div>
+                Počet jídel za den
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                {mealCountOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setMealCount(option.value)}
+                    className={cn(
+                      "rounded-xl border-2 p-3 text-left transition-all",
+                      mealCount === option.value
+                        ? "border-emerald-500 bg-emerald-500/10 text-white shadow-lg shadow-emerald-900/30"
+                        : "border-white/10 bg-zinc-800/60 text-zinc-400 hover:border-emerald-500/50 hover:text-white"
+                    )}
+                  >
+                    <div className="font-semibold">{option.label}</div>
+                    <div className="text-xs text-zinc-500">
+                      {option.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Diet Preferences Card */}
+          <Card className="bg-zinc-900/80 border-white/10 backdrop-blur transition-all hover:border-emerald-500/50 shadow-xl md:col-span-2 lg:col-span-1">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg text-white">
+                <div className="rounded-lg bg-red-500/15 p-2 ring-1 ring-red-500/30">
+                  <AlertCircle className="h-5 w-5 text-red-400" />
+                </div>
+                Diety a alergie
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {dietOptions.map((diet) => {
+                  const Icon = diet.icon;
+                  return (
+                    <div
+                      key={diet.id}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg border p-3 transition-all cursor-pointer",
+                        selectedDiets.includes(diet.id)
+                          ? "border-emerald-500 bg-emerald-500/10 text-white"
+                          : "border-white/10 bg-zinc-800/60 text-zinc-400 hover:border-emerald-500/50 hover:text-white"
+                      )}
+                      onClick={() => toggleDiet(diet.id)}
+                    >
+                      {/* <Checkbox
+                        id={diet.id}
+                        checked={selectedDiets.includes(diet.id)}
+                        onCheckedChange={() => toggleDiet(diet.id)}
+                        className="border-zinc-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                      /> */}
+                      <Icon className="h-4 w-4 text-zinc-500" />
+                      <Label htmlFor={diet.id} className="cursor-pointer flex-1 text-inherit">
+                        {diet.label}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Calendar Card */}
+          <Card className="bg-zinc-900/80 border-white/10 backdrop-blur transition-all hover:border-emerald-500/50 shadow-xl md:col-span-2 lg:col-span-2">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg text-white">
+                <div className="rounded-lg bg-emerald-500/15 p-2 ring-1 ring-emerald-500/30">
+                  <CalendarDays className="h-5 w-5 text-emerald-400" />
+                </div>
+                Kalendář plánování
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center">
+                <Calendar
+                  mode="multiple"
+                  selected={selectedDates}
+                  onSelect={(dates) => setSelectedDates(dates || [])}
+                  className="rounded-xl border border-white/10 bg-zinc-800/60 p-3 text-white [&_.rdp-day]:text-zinc-400 [&_.rdp-day_selected]:bg-emerald-500 [&_.rdp-day_selected]:text-white [&_.rdp-day:hover]:bg-emerald-500/20"
+                  numberOfMonths={2}
+                />
+                {selectedDates.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="text-sm text-zinc-400">Vybráno:</span>
+                    <Badge className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
+                      {selectedDates.length} {selectedDates.length === 1 ? "den" : selectedDates.length < 5 ? "dny" : "dní"}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stores Card */}
+          <Card className="bg-zinc-900/80 border-white/10 backdrop-blur transition-all hover:border-emerald-500/50 shadow-xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg text-white">
+                <div className="rounded-lg bg-blue-500/15 p-2 ring-1 ring-blue-500/30">
+                  <ShoppingBag className="h-5 w-5 text-blue-400" />
+                </div>
+                Obchody
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {storeOptions.map((store) => {
+                  const logoUrl = getStoreLogoUrl(store.id);
+                  return (
+                    <div
+                      key={store.id}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg border p-3 transition-all cursor-pointer",
+                        selectedStores.includes(store.id)
+                          ? "border-emerald-500 bg-emerald-500/10 text-white"
+                          : "border-white/10 bg-zinc-800/60 text-zinc-400 hover:border-emerald-500/50 hover:text-white"
+                      )}
+                      onClick={() => toggleStore(store.id)}
+                    >
+                      {/* optional checkbox could be re-enabled here */}
+                      {logoUrl ? (
+                        <img
+                          src={logoUrl}
+                          alt={`${store.name} logo`}
+                          className="h-6 w-6 flex-shrink-0 rounded object-contain"
+                          onError={(e) => {
+                            // hide broken logo images
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="h-6 w-6 flex-shrink-0 rounded bg-zinc-800/40 flex items-center justify-center text-xs text-zinc-400">
+                          {store.name.slice(0,1)}
+                        </div>
+                      )}
+                      <Label htmlFor={store.id} className="cursor-pointer flex-1 text-inherit">
+                        {store.name}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Generate Button */}
+        <div className="mt-8 text-center">
+          <Button
+            onClick={handleGenerate}
+            disabled={submitting}
+            size="lg"
+            className="h-14 px-12 text-lg font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30 transition-all hover:scale-105"
+          >
+            <Sparkles className="mr-2 h-5 w-5" />
+            {submitting ? "Generuji..." : "Vygenerovat jídelníček"}
+          </Button>
+          <p className="mt-3 text-sm text-zinc-400">
+            Na základě vašich preferencí vytvoříme personalizovaný plán
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }

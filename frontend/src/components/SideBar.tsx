@@ -40,6 +40,7 @@ export default function Layout() {
                     accentColor={SIDEBAR_COLORS.accent}
                     onMenuOpen={() => console.log('Menu opened')}
                     onMenuClose={() => console.log('Menu closed')}
+                    onUserProfileClick={() => console.log('User profile clicked')}
                 />
             </div>
         </div>
