@@ -20,6 +20,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.budgetbites.dto.request.ForgotPasswordRequest;
+import com.example.budgetbites.dto.request.ResetPasswordRequest;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +37,9 @@ import java.util.stream.Collectors;
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+
+    @Value("${app.frontend.reset-password-url:http://localhost:5173/reset-password}")
+    private String resetPasswordUrl;
 
     @Autowired
     private JwtService jwtService;
@@ -123,6 +131,18 @@ public class AuthController {
     public ResponseEntity<ApiMessageResponse> resendVerification(@RequestBody ResendVerificationRequest request) {
         logger.info("[RESEND] email={}", request.getEmail());
         String msg = authService.resendVerificationCode(request.getEmail());
+        return ResponseEntity.ok(new ApiMessageResponse(msg));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiMessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        String msg = authService.forgotPassword(request.getEmail(), resetPasswordUrl);
+        return ResponseEntity.ok(new ApiMessageResponse(msg));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiMessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        String msg = authService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(new ApiMessageResponse(msg));
     }
 }

@@ -153,4 +153,25 @@ public class EmailService {
                 "</body>\n" +
                 "</html>";
     }
+
+    public void sendPasswordResetLink(String toEmail, String resetLink) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject("BudgetBites - Obnovení hesla");
+            helper.setFrom(fromEmail);
+            helper.setText(
+                    "<p>Cauki mnouky, toto budou delat nasi frontendaci MARTIN a LUKAS</p>" +
+                            "<p>klikni pro obnovení hesla:</p>" +
+                            "<p><a href=\"" + resetLink + "\">Obnovit heslo</a></p>",
+                    true
+            );
+
+            mailSender.send(mimeMessage);
+        } catch (Exception e) {
+            throw new RuntimeException("Nepodařilo se odeslat reset email: " + e.getMessage(), e);
+        }
+    }
 }

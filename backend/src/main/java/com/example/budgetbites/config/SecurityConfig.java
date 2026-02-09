@@ -41,20 +41,18 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        // Veřejné endpointy (bez autentizace)
                         .requestMatchers(
                                 "/auth/register",
                                 "/auth/verify-email",
                                 "/auth/login",
                                 "/auth/register-simple",
                                 "/auth/resend-verification",
-                                "/auth/verification-status"
+                                "/auth/verification-status",
+                                "/auth/forgot-password",
+                                "/auth/reset-password",
+                                "/auth/me"
                         ).permitAll()
-                        // Test endpointy
                         .requestMatchers("/test/**").permitAll()
-                        // API endpointy
-                        .requestMatchers("/api/**").permitAll()
-                        // Všechny ostatní vyžadují autentizaci
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess ->

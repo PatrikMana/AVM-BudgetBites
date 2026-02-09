@@ -1,6 +1,8 @@
 package com.example.budgetbites.service;
+import com.example.budgetbites.domain.entity.PasswordResetToken;
 
 import com.example.budgetbites.domain.entity.User;
+import com.example.budgetbites.domain.repository.PasswordResetTokenRepository;
 import com.example.budgetbites.domain.repository.UserRepository;
 import com.example.budgetbites.dto.response.VerificationStatusResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,10 @@ import org.springframework.http.HttpStatus;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
+import java.util.UUID;
 
 /**
  * Služba pro autentizaci a registraci uživatelů.
@@ -22,21 +28,92 @@ public class AuthService {
     
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordResetTokenRepository resetTokenRepository;
 
     private static final int MAX_VERIFY_ATTEMPTS = 5;
+
     private static final int RESEND_COOLDOWN_SECONDS = 60;
     private static final int RESEND_WINDOW_MINUTES = 60;
     private static final int MAX_RESENDS_PER_WINDOW = 5;
     private static final int LOCK_MINUTES = 15;
-    
+
+
     private static final SecureRandom secureRandom = new SecureRandom();
-    
+
+    PasswordResetToken prt = new PasswordResetToken();
+
     @Autowired
     private EmailService emailService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       PasswordResetTokenRepository resetTokenRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.resetTokenRepository = resetTokenRepository;
+    }
+
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(hashed);
+        } catch (Exception e) {
+            throw new RuntimeException("Token hashing failed", e);
+        }
+    }
+
+    public String forgotPassword(String email, String frontendResetBaseUrl) {
+        String normEmail = normalizeEmail(email);
+
+        // IMPORTANT: neprozrazovat jestli email existuje
+        Optional<User> userOpt = userRepository.findByEmail(normEmail);
+        if (userOpt.isEmpty()) {
+            return "Pokud email existuje, poslali jsme instrukce pro obnovení hesla.";
+        }
+
+        User user = userOpt.get();
+        if (!user.isEmailVerified()) {
+            return "Pokud email existuje, poslali jsme instrukce pro obnovení hesla.";
+        }
+
+        String rawToken = UUID.randomUUID().toString().replace("-", "");
+        String tokenHash = hashToken(rawToken);
+
+        PasswordResetToken prt = new PasswordResetToken();
+        prt.setUser(user);
+        prt.setTokenHash(tokenHash);
+        prt.setExpiresAt(LocalDateTime.now().plusMinutes(30));
+        resetTokenRepository.save(prt);
+
+        String resetLink = frontendResetBaseUrl + "?token=" + rawToken;
+        emailService.sendPasswordResetLink(normEmail, resetLink);
+
+        return "Pokud email existuje, poslali jsme instrukce pro obnovení hesla.";
+    }
+
+    public String resetPassword(String token, String newPassword) {
+        String tokenHash = hashToken(token);
+
+        PasswordResetToken prt = resetTokenRepository.findTopByTokenHashOrderByIdDesc(tokenHash)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Neplatný token"));
+
+        if (prt.isUsed()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token už byl použit");
+        }
+
+        if (prt.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token vypršel");
+        }
+
+        User user = prt.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        prt.setUsedAt(LocalDateTime.now());
+        resetTokenRepository.save(prt);
+
+        return "Heslo bylo změněno. Můžete se přihlásit.";
     }
 
     /**
