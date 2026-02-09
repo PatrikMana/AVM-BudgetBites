@@ -217,6 +217,7 @@ button.sm-toggle {
     }
     body {
         @apply bg-background text-foreground;
+        overflow-x: hidden;
     }
 }
 
