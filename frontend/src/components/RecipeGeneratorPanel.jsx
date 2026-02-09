@@ -256,8 +256,8 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
           </Card>
 
           {/* Calendar Card */}
-          <Card className="bg-zinc-900/80 border-white/10 backdrop-blur transition-all hover:border-emerald-500/50 shadow-xl md:col-span-2 lg:col-span-2">
-            <CardHeader className="pb-4">
+          <Card className="md:col-span-2 lg:col-span-2 border border-white/15 bg-zinc-900/60 shadow-xl rounded-none">
+            <CardHeader className="flex items-center justify-between border-b border-white/10 px-6 py-4">
               <CardTitle className="flex items-center gap-2 text-lg text-white">
                 <div className="rounded-lg bg-emerald-500/15 p-2 ring-1 ring-emerald-500/30">
                   <CalendarDays className="h-5 w-5 text-emerald-400" />
@@ -265,15 +265,15 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
                 Planning Calendar
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center">
-                <Calendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  className="rounded-xl border border-white/10 bg-zinc-800/60 p-3"
-                  numberOfMonths={2}
-                />
+              <CardContent className="px-4 pb-6 pt-4 sm:px-6">
+                <div className="calendar-container w-full">
+                  <Calendar
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    className="w-full"
+                    numberOfMonths={2}
+                  />
                 {dateRange?.from && (
                   <div className="mt-4 flex flex-wrap gap-2 items-center">
                     <span className="text-sm text-zinc-400">Vybráno:</span>

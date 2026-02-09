@@ -4,7 +4,6 @@ import * as React from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import { cn } from "../../lib/utils";
-import { buttonVariants } from "./button";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
@@ -17,43 +16,49 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("w-full !m-0 p-0", className)}
       classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium text-white",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-        ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex",
+        months: "grid w-full grid-cols-1 gap-8 lg:grid-cols-2",
+        month: "w-full space-y-3",
+        caption:
+          "flex items-center justify-between px-2 pb-2 border-b border-white/5",
+        caption_label: "text-sm font-semibold text-white tracking-wide",
+        nav: "flex items-center gap-1",
+        nav_button:
+          "h-7 w-7 grid place-items-center border border-white/10 bg-zinc-800/60 text-zinc-400 transition-all hover:bg-emerald-500/20 hover:border-emerald-400/50 hover:text-emerald-300 rounded-none",
+        nav_button_previous: "",
+        nav_button_next: "",
+        table: "w-full border-collapse",
+        tbody: "flex flex-col gap-[3px]",
+        head_row: "grid grid-cols-7 gap-[3px] mb-1",
         head_cell:
-          "text-zinc-400 rounded-md w-8 font-normal text-[0.8rem]",
-        row: "flex w-full mt-2",
-        cell: cn(
-          "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent",
-          props.mode === "range"
-            ? "[&:has(>.day-range-end)]:rounded-r-md [&:has(>.day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
-            : "[&:has([aria-selected])]:rounded-md"
-        ),
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-8 w-8 p-0 font-normal aria-selected:opacity-100 hover:!bg-zinc-700 !text-inherit"
-        ),
-        day_range_start: "day-range-start",
-        day_range_end: "day-range-end",
+          "text-center text-[0.65rem] font-semibold uppercase tracking-widest text-zinc-500 py-1",
+        row: "grid grid-cols-7 gap-[3px]",
+        cell: "relative",
+
+        /* ── Normal day ─────────────────────────────────────── */
+        day: "w-full aspect-square flex items-center justify-center text-sm font-medium text-zinc-400 bg-zinc-800/50 border border-white/[0.06] rounded-none transition-all duration-150 hover:bg-zinc-700/80 hover:text-white hover:border-white/20",
+
+        /* ── Selected start / end ───────────────────────────── */
+        day_range_start:
+          "!bg-emerald-500 !text-black !border-emerald-400 !font-bold !shadow-[0_0_12px_rgba(16,185,129,0.4)] !border-l-[3px] !border-l-emerald-200",
+        day_range_end:
+          "!bg-emerald-500 !text-black !border-emerald-400 !font-bold !shadow-[0_0_12px_rgba(16,185,129,0.4)] !border-r-[3px] !border-r-emerald-200",
+
+        /* ── Any selected day (start OR end when only one picked) */
         day_selected:
-          "!bg-emerald-500 !text-white hover:!bg-emerald-600 focus:!bg-emerald-500",
-        day_today: "!bg-zinc-700 font-semibold",
-        day_outside: "opacity-50",
-        day_disabled: "opacity-50",
+          "!bg-emerald-500 !text-black !border-emerald-400 !font-bold",
+
+        /* ── Days between start and end ─────────────────────── */
         day_range_middle:
-          "!bg-emerald-500/30 !text-white",
+          "!bg-emerald-500/20 !text-emerald-200 !border-emerald-400/15 !font-medium",
+
+        /* ── Today indicator ────────────────────────────────── */
+        day_today:
+          "!border-emerald-400/60 !text-emerald-300 !font-bold !bg-zinc-800",
+
+        day_outside: "!opacity-20 !text-zinc-600",
+        day_disabled: "!opacity-15",
         day_hidden: "invisible",
         ...classNames,
       }}
