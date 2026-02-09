@@ -73,7 +73,7 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
   const [mealCount, setMealCount] = useState(3);
   const [selectedDiets, setSelectedDiets] = useState([]);
   const [selectedStores, setSelectedStores] = useState([]);
-  const [selectedDates, setSelectedDates] = useState([]);
+  const [dateRange, setDateRange] = useState(undefined);
   const [submitting, setSubmitting] = useState(false);
 
   const toggleDiet = (dietId) => {
@@ -94,12 +94,26 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
 
   const handleGenerate = async () => {
     setSubmitting(true);
+    
+    // Calculate the number of days in the range
+    let daysCount = 0;
+    if (dateRange?.from) {
+      if (dateRange.to) {
+        // Calculate days between from and to (inclusive)
+        const diffTime = Math.abs(dateRange.to - dateRange.from);
+        daysCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end
+      } else {
+        daysCount = 1; // Only start date selected
+      }
+    }
+    
     const payload = {
       calories: calories[0],
       mealCount,
       selectedDiets,
       selectedStores,
-      selectedDates,
+      dateRange,
+      daysCount,
     };
 
     try {
@@ -254,18 +268,34 @@ export default function RecipeGeneratorPanel({ onGenerate }) {
             <CardContent>
               <div className="flex flex-col items-center">
                 <Calendar
-                  mode="multiple"
-                  selected={selectedDates}
-                  onSelect={(dates) => setSelectedDates(dates || [])}
-                  className="rounded-xl border border-white/10 bg-zinc-800/60 p-3 text-white [&_.rdp-day]:text-zinc-400 [&_.rdp-day_selected]:bg-emerald-500 [&_.rdp-day_selected]:text-white [&_.rdp-day:hover]:bg-emerald-500/20"
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  className="rounded-xl border border-white/10 bg-zinc-800/60 p-3"
                   numberOfMonths={2}
                 />
-                {selectedDates.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="text-sm text-zinc-400">Selected:</span>
-                    <Badge className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
-                      {selectedDates.length} {selectedDates.length === 1 ? "day" : selectedDates.length < 5 ? "days" : "days"}
-                    </Badge>
+                {dateRange?.from && (
+                  <div className="mt-4 flex flex-wrap gap-2 items-center">
+                    <span className="text-sm text-zinc-400">Vybráno:</span>
+                    {dateRange.to ? (
+                      <>
+                        <Badge className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
+                          {dateRange.from.toLocaleDateString('cs-CZ')} - {dateRange.to.toLocaleDateString('cs-CZ')}
+                        </Badge>
+                        <Badge className="bg-blue-500/20 border border-blue-500/30 text-blue-400">
+                          {Math.ceil((dateRange.to - dateRange.from) / (1000 * 60 * 60 * 24)) + 1} {
+                            (() => {
+                              const days = Math.ceil((dateRange.to - dateRange.from) / (1000 * 60 * 60 * 24)) + 1;
+                              return days === 1 ? "den" : days < 5 ? "dny" : "dní";
+                            })()
+                          }
+                        </Badge>
+                      </>
+                    ) : (
+                      <Badge className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
+                        {dateRange.from.toLocaleDateString('cs-CZ')} (vyberte koncové datum)
+                      </Badge>
+                    )}
                   </div>
                 )}
               </div>
