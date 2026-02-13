@@ -12,8 +12,8 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
 /**
- * Služba pro odesílání emailů.
- * Zajišťuje odesílání verifikačních kódů a dalších systémových emailů.
+ * Service for sending emails.
+ * Handles sending verification codes and other system emails.
  */
 @Service
 public class EmailService {
@@ -27,42 +27,42 @@ public class EmailService {
     private String fromEmail;
 
     /**
-     * Odešle verifikační kód na zadanou emailovou adresu.
+     * Sends a verification code to the specified email address.
      */
     public void sendVerificationCode(String toEmail, String verificationCode) {
         try {
-            logger.info("Pokouším se odeslat email na adresu: {}", toEmail);
+            logger.info("Attempting to send email to: {}", toEmail);
 
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             helper.setTo(toEmail);
-            helper.setSubject("BudgetBites - Ověření registrace");
+            helper.setSubject("BudgetBites - Registration Verification");
             helper.setFrom(fromEmail);
             helper.setText(buildHtmlContent(verificationCode), true);
 
-            logger.info("Odesílám email z adresy: {} na adresu: {}", fromEmail, toEmail);
+            logger.info("Sending email from: {} to: {}", fromEmail, toEmail);
             mailSender.send(mimeMessage);
-            logger.info("Email byl úspěšně odeslán na adresu: {}", toEmail);
+            logger.info("Email successfully sent to: {}", toEmail);
 
         } catch (MessagingException e) {
-            logger.error("Chyba při odesílání emailu na adresu {}: {}", toEmail, e.getMessage(), e);
-            throw new RuntimeException("Nepodařilo se odeslat ověřovací email: " + e.getMessage(), e);
+            logger.error("Error sending email to {}: {}", toEmail, e.getMessage(), e);
+            throw new RuntimeException("Failed to send verification email: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Sestaví HTML obsah verifikačního emailu.
+     * Builds the HTML content for the verification email.
      */
     private String buildHtmlContent(String verificationCode) {
         return "<!doctype html>\n" +
-                "<html lang=\"cs\">\n" +
+                "<html lang=\"en\">\n" +
                 "<head>\n" +
                 "  <meta charset=\"utf-8\">\n" +
                 "  <meta name=\"viewport\" content=\"width=device-width\">\n" +
                 "  <meta name=\"x-apple-disable-message-reformatting\">\n" +
                 "  <meta http-equiv=\"x-ua-compatible\" content=\"ie=edge\">\n" +
-                "  <title>Ověřovací kód</title>\n" +
+                "  <title>Verification Code</title>\n" +
                 "  <style>\n" +
                 "    @media (max-width: 600px) {\n" +
                 "      .container { width: 100% !important; }\n" +
@@ -93,7 +93,7 @@ public class EmailService {
                 "                  </td>\n" +
                 "                  <td align=\"right\">\n" +
                 "                    <span style=\"display:inline-block; font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#cbd5e1;\">\n" +
-                "                      Bezpečnostní ověření\n" +
+                "                      Security Verification\n" +
                 "                    </span>\n" +
                 "                  </td>\n" +
                 "                </tr>\n" +
@@ -104,10 +104,10 @@ public class EmailService {
                 "          <tr>\n" +
                 "            <td class=\"px\" style=\"padding:28px 32px;\">\n" +
                 "              <h1 class=\"h1\" style=\"margin:0 0 12px; font-family:Arial,Helvetica,sans-serif; font-size:32px; line-height:38px; color:#e5e7eb;\">\n" +
-                "                Váš ověřovací kód\n" +
+                "                Your Verification Code\n" +
                 "              </h1>\n" +
                 "              <p class=\"text\" style=\"margin:0 0 20px; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:22px; color:#e5e7eb;\">\n" +
-                "                Tento kód je platný po dobu <strong>10 minut</strong>.\n" +
+                "                This code is valid for <strong>10 minutes</strong>.\n" +
                 "              </p>\n" +
                 "\n" +
                 "              <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"margin:0 0 20px;\">\n" +
@@ -125,7 +125,7 @@ public class EmailService {
                 "              </table>\n" +
                 "\n" +
                 "              <p class=\"muted\" style=\"margin:0 0 28px; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:20px; color:#9ca3af;\">\n" +
-                "                Pokud jste o kód nežádali, tento e-mail můžete ignorovat.\n" +
+                "                If you did not request this code, you can ignore this email.\n" +
                 "              </p>\n" +
                 "\n" +
                 "              <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" align=\"center\" style=\"margin:0 auto 10px;\">\n" +
@@ -134,7 +134,7 @@ public class EmailService {
                 "              </table>\n" +
                 "\n" +
                 "              <p class=\"muted\" style=\"margin:18px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:18px; color:#9ca3af;\">\n" +
-                "                Děkujeme,<br> <strong style=\"color:#e5e7eb;\">BudgetBites tým</strong>\n" +
+                "                Thank you,<br> <strong style=\"color:#e5e7eb;\">BudgetBites Team</strong>\n" +
                 "              </p>\n" +
                 "            </td>\n" +
                 "          </tr>\n" +
@@ -142,7 +142,7 @@ public class EmailService {
                 "          <tr>\n" +
                 "            <td style=\"padding:16px 32px; border-top:1px solid #23262b;\">\n" +
                 "              <p class=\"muted\" style=\"margin:0; font-family:Arial,Helvetica,sans-serif; font-size:11px; line-height:16px; color:#94a3b8;\">\n" +
-                "                Tento e-mail byl odeslán automaticky, neodpovídejte na něj.\n" +
+                "                This email was sent automatically, please do not reply.\n" +
                 "              </p>\n" +
                 "            </td>\n" +
                 "          </tr>\n" +
@@ -160,18 +160,18 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             helper.setTo(toEmail);
-            helper.setSubject("BudgetBites - Obnovení hesla");
+            helper.setSubject("BudgetBites - Password Reset");
             helper.setFrom(fromEmail);
             helper.setText(
-                    "<p>Cauki mnouky, toto budou delat nasi frontendaci MARTIN a LUKAS</p>" +
-                            "<p>klikni pro obnovení hesla:</p>" +
-                            "<p><a href=\"" + resetLink + "\">Obnovit heslo</a></p>",
+                    "<p>Hello, this will be implemented by our frontend developers MARTIN and LUKAS</p>" +
+                            "<p>Click to reset your password:</p>" +
+                            "<p><a href=\"" + resetLink + "\">Reset Password</a></p>",
                     true
             );
 
             mailSender.send(mimeMessage);
         } catch (Exception e) {
-            throw new RuntimeException("Nepodařilo se odeslat reset email: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to send reset email: " + e.getMessage(), e);
         }
     }
 }
