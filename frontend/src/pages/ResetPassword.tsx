@@ -182,15 +182,6 @@ const ResetPassword = () => {
                 {/* Spacer */}
                 <div className="h-[16px]"></div>
 
-                <div className="text-left">
-                  <span
-                    onClick={() => window.location.href = "/login"}
-                    className="text-xs text-zinc-400 hover:text-emerald-400 transition-colors cursor-pointer"
-                  >
-                    Back to Login
-                  </span>
-                </div>
-
                 <button
                   type="submit"
                   disabled={isLoading}
