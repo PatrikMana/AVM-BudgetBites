@@ -103,6 +103,10 @@ const Login = () => {
   const [verificationCode, setVerificationCode] = useState("");
   const [emailToVerify, setEmailToVerify] = useState("");
 
+  // Forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
 
   // Check if user already has a valid token
@@ -248,6 +252,44 @@ const Login = () => {
     logout(true);
   };
 
+  // Forgot password handler
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: forgotPasswordEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to send reset email");
+      }
+
+      toast({
+        title: "Email sent!",
+        description: "Check your inbox for password reset instructions.",
+      });
+
+      // Close the forgot password overlay
+      setShowForgotPassword(false);
+      setForgotPasswordEmail("");
+    } catch (error: any) {
+      toast({
+        title: "Request failed",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <main className="w-screen min-h-dvh grid place-items-center p-6 bg-zinc-950">
       <div
@@ -339,6 +381,14 @@ const Login = () => {
                     </button>
                   </div>
                 </label>
+                <div className="text-left">
+                  <span
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-xs text-zinc-400 hover:text-emerald-400 transition-colors cursor-pointer"
+                  >
+                    Forgot Password?
+                  </span>
+                </div>
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -488,6 +538,66 @@ const Login = () => {
               >
                 Go to Account
               </button>
+            </div>
+          )}
+
+          {/* Forgot Password Overlay */}
+          {showForgotPassword && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+              <div className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl backdrop-blur">
+                {/* Header - same as login */}
+                <div className="mb-6 flex items-start gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600/15 text-emerald-400 ring-1 ring-emerald-500/30">
+                    <UtensilsCrossed className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">
+                      Budget Bites
+                    </h2>
+                    <p className="text-sm text-zinc-400">
+                      Reset your password
+                    </p>
+                  </div>
+                </div>
+
+                {/* Description text - centered and styled */}
+                <p className="mb-10 text-center text-base text-zinc-300 leading-relaxed">
+                  Enter your email and we'll send you<br />
+                  a link to reset your password.
+                </p>
+
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <label className="block">
+                    <div className="mb-1 text-sm font-medium text-zinc-300">Email</div>
+                    <input
+                      id="forgot-password-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={forgotPasswordEmail}
+                      onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                      required
+                      className="w-full rounded-lg border border-white/10 bg-zinc-800/60 px-3 py-2 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </label>
+                  {/* Spacer to match login form height */}
+                  <div className="h-[64px]"></div>
+                  <div className="text-left">
+                    <span
+                      onClick={() => setShowForgotPassword(false)}
+                      className="text-xs text-zinc-400 hover:text-emerald-400 transition-colors cursor-pointer"
+                    >
+                      Back to Login
+                    </span>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/30 transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isLoading ? "Sending..." : "Send Reset Link"}
+                  </button>
+                </form>
+              </div>
             </div>
           )}
         </div>

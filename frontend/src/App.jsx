@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
@@ -9,6 +8,7 @@ import Account from "./pages/Account"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { Toaster } from "./components/ui/toaster"
 import NotFound from './pages/NotFound'
+import ResetPassword from "./pages/ResetPassword"
 
 
 function App() {
@@ -29,6 +29,7 @@ function App() {
                             </ProtectedRoute>
                         } /> {/* renders at "/generate" - PROTECTED */}
                         <Route path="login" element={<Login />} /> {/* renders at "/login" */}
+                        <Route path="reset-password" element={<ResetPassword />} /> {/* renders at "/reset-password" */}
                         <Route path="account" element={
                             <ProtectedRoute>
                                 <Account />
