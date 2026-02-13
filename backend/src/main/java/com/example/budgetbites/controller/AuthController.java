@@ -24,6 +24,8 @@ import com.example.budgetbites.dto.request.ForgotPasswordRequest;
 import com.example.budgetbites.dto.request.ResetPasswordRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -110,8 +112,23 @@ public class AuthController {
     public List<UserResponse> listUsers() {
         return userRepository.findAll().stream()
                 .filter(User::isEmailVerified)
-                .map(u -> new UserResponse(u.getId(), u.getUsername()))
+                .map(u -> new UserResponse(u.getId(), u.getUsername(), u.getEmail()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Vrátí údaje aktuálně přihlášeného uživatele.
+     * GET /auth/me
+     */
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Uživatel nenalezen"));
+
+        return ResponseEntity.ok(new UserResponse(user.getId(), user.getUsername(), user.getEmail()));
     }
 
     /**
