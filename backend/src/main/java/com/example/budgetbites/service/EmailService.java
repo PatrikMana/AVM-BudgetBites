@@ -160,18 +160,117 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             helper.setTo(toEmail);
-            helper.setSubject("BudgetBites - Password Reset");
+            helper.setSubject("BudgetBites - Set a New Password"); // nebo "Nastavení nového hesla"
             helper.setFrom(fromEmail);
-            helper.setText(
-                    "<p>Hello, this will be implemented by our frontend developers MARTIN and LUKAS</p>" +
-                            "<p>Click to reset your password:</p>" +
-                            "<p><a href=\"" + resetLink + "\">Reset Password</a></p>",
-                    true
-            );
+            helper.setText(buildPasswordResetHtml(resetLink), true);
 
             mailSender.send(mimeMessage);
+            logger.info("Password reset email sent to: {}", toEmail);
         } catch (Exception e) {
+            logger.error("Error sending password reset email to {}: {}", toEmail, e.getMessage(), e);
             throw new RuntimeException("Failed to send reset email: " + e.getMessage(), e);
         }
+    }
+
+    private String buildPasswordResetHtml(String resetLink) {
+        return "<!doctype html>\n" +
+                "<html lang=\"en\">\n" +
+                "<head>\n" +
+                "  <meta charset=\"utf-8\">\n" +
+                "  <meta name=\"viewport\" content=\"width=device-width\">\n" +
+                "  <meta name=\"x-apple-disable-message-reformatting\">\n" +
+                "  <meta http-equiv=\"x-ua-compatible\" content=\"ie=edge\">\n" +
+                "  <title>Set a New Password</title>\n" +
+                "  <style>\n" +
+                "    @media (max-width: 600px) {\n" +
+                "      .container { width: 100% !important; }\n" +
+                "      .px { padding-left: 16px !important; padding-right: 16px !important; }\n" +
+                "      .h1 { font-size: 28px !important; line-height: 34px !important; }\n" +
+                "    }\n" +
+                "    @media (prefers-color-scheme: dark) {\n" +
+                "      .bg { background-color: #0b0c0d !important; }\n" +
+                "      .card { background-color: #111317 !important; }\n" +
+                "      .muted { color:#cbd5e1 !important; }\n" +
+                "      .text { color:#e5e7eb !important; }\n" +
+                "    }\n" +
+                "  </style>\n" +
+                "</head>\n" +
+                "<body style=\"margin:0; padding:0; background:#0b0c0d;\" class=\"bg\">\n" +
+                "  <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"background:#0b0c0d00;\">\n" +
+                "    <tr>\n" +
+                "      <td align=\"center\" style=\"padding:24px;\">\n" +
+                "        <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"600\" class=\"container\" style=\"width:600px; max-width:600px; background:#111317; border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,.35);\">\n" +
+                "\n" +
+                "          <tr>\n" +
+                "            <td class=\"px\" style=\"padding:28px 32px; border-bottom:1px solid #23262b;\">\n" +
+                "              <table role=\"presentation\" width=\"100%\">\n" +
+                "                <tr>\n" +
+                "                  <td align=\"left\">\n" +
+                "                    <span style=\"display:inline-block; font-family:Arial,Helvetica,sans-serif; font-weight:700; font-size:18px; color:#22C55E;\">\n" +
+                "                      BudgetBites\n" +
+                "                    </span>\n" +
+                "                  </td>\n" +
+                "                  <td align=\"right\">\n" +
+                "                    <span style=\"display:inline-block; font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#cbd5e1;\">\n" +
+                "                      Account Security\n" +
+                "                    </span>\n" +
+                "                  </td>\n" +
+                "                </tr>\n" +
+                "              </table>\n" +
+                "            </td>\n" +
+                "          </tr>\n" +
+                "\n" +
+                "          <tr>\n" +
+                "            <td class=\"px\" style=\"padding:28px 32px;\">\n" +
+                "              <h1 class=\"h1\" style=\"margin:0 0 12px; font-family:Arial,Helvetica,sans-serif; font-size:32px; line-height:38px; color:#e5e7eb;\">\n" +
+                "                Set a New Password\n" +
+                "              </h1>\n" +
+                "              <p class=\"text\" style=\"margin:0 0 20px; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:22px; color:#e5e7eb;\">\n" +
+                "                Use the button below to set a new password for your BudgetBites account.\n" +
+                "              </p>\n" +
+                "              <p class=\"muted\" style=\"margin:0 0 20px; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:20px; color:#9ca3af;\">\n" +
+                "                For your security, this link is valid for a limited time.\n" +
+                "              </p>\n" +
+                "\n" +
+                "              <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" align=\"center\" style=\"margin:0 auto 10px;\">\n" +
+                "                <tr>\n" +
+                "                  <td align=\"center\" bgcolor=\"#22C55E\" style=\"border-radius:10px;\">\n" +
+                "                    <a href=\"" + resetLink + "\"\n" +
+                "                       style=\"display:inline-block; padding:14px 20px; font-family:Arial,Helvetica,sans-serif; font-size:14px; font-weight:700; color:#0b0c0d; text-decoration:none; border-radius:10px;\">\n" +
+                "                      Set New Password\n" +
+                "                    </a>\n" +
+                "                  </td>\n" +
+                "                </tr>\n" +
+                "              </table>\n" +
+                "\n" +
+                "              <p class=\"muted\" style=\"margin:18px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:18px; color:#9ca3af;\">\n" +
+                "                If the button doesn’t work, copy and paste this link into your browser:<br>\n" +
+                "                <span style=\"word-break:break-all; color:#94a3b8;\">" + resetLink + "</span>\n" +
+                "              </p>\n" +
+                "\n" +
+                "              <p class=\"muted\" style=\"margin:18px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:18px; color:#9ca3af;\">\n" +
+                "                If you didn’t request a new password, you can ignore this email.\n" +
+                "              </p>\n" +
+                "\n" +
+                "              <p class=\"muted\" style=\"margin:18px 0 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:18px; color:#9ca3af;\">\n" +
+                "                Thank you,<br> <strong style=\"color:#e5e7eb;\">BudgetBites Team</strong>\n" +
+                "              </p>\n" +
+                "            </td>\n" +
+                "          </tr>\n" +
+                "\n" +
+                "          <tr>\n" +
+                "            <td style=\"padding:16px 32px; border-top:1px solid #23262b;\">\n" +
+                "              <p class=\"muted\" style=\"margin:0; font-family:Arial,Helvetica,sans-serif; font-size:11px; line-height:16px; color:#94a3b8;\">\n" +
+                "                This email was sent automatically, please do not reply.\n" +
+                "              </p>\n" +
+                "            </td>\n" +
+                "          </tr>\n" +
+                "\n" +
+                "        </table>\n" +
+                "      </td>\n" +
+                "    </tr>\n" +
+                "  </table>\n" +
+                "</body>\n" +
+                "</html>";
     }
 }
