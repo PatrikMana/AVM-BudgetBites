@@ -38,10 +38,10 @@ export const useAuth = () => {
   }, []);
 
   // Login method
-  const login = async (username, password) => {
+  const login = async (username, password, email) => {
     setLoading(true);
     try {
-      const result = await authLogin(username, password);
+      const result = await authLogin(username, password, email);
       checkAuth(); // Refresh state
       return result;
     } catch (error) {

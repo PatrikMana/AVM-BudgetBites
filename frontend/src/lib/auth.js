@@ -192,9 +192,10 @@ export const authFetch = async (url, options = {}) => {
  * Login function that handles JWT response from backend
  * @param {string} username - Username
  * @param {string} password - Password
+ * @param {string} email - User email from login form
  * @returns {Promise<Object>} Success response with user data
  */
-export const login = async (username, password) => {
+export const login = async (username, password, email = "") => {
   const response = await fetch('/auth/login', {
     method: 'POST',
     headers: {
@@ -224,7 +225,7 @@ export const login = async (username, password) => {
     // Extract user data from token payload or response
     const userData = {
       username: responseData.username || username,
-      email: responseData.email || `${username}@budgetbites.com`, // fallback
+      email: responseData.email || email || "",
     };
 
     setAuthToken(responseData.token, userData);
@@ -239,7 +240,7 @@ export const login = async (username, password) => {
     const mockToken = btoa(`${username}:${Date.now()}:mock`);
     const userData = {
       username,
-      email: `${username}@budgetbites.com`,
+      email: email || "",
     };
 
     setAuthToken(mockToken, userData);
