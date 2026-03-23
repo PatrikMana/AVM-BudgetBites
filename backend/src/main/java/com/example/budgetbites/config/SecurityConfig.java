@@ -53,6 +53,7 @@ public class SecurityConfig {
                                 "/auth/me"
                         ).permitAll()
                         .requestMatchers("/test/**").permitAll()
+                        .requestMatchers("/api/cocktails/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess ->
