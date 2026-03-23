@@ -1,9 +1,9 @@
 package com.example.budgetbites.dto.response;
 
-import com.example.budgetbites.domain.entity.Cocktail;
-
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.example.budgetbites.domain.entity.Cocktail;
 
 public class CocktailResponse {
 

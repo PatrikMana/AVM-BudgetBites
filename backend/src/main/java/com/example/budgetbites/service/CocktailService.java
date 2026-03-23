@@ -1,8 +1,9 @@
 package com.example.budgetbites.service;
 
-import com.example.budgetbites.domain.entity.*;
-import com.example.budgetbites.domain.repository.*;
-import com.example.budgetbites.dto.response.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -10,9 +11,17 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.example.budgetbites.domain.entity.Cocktail;
+import com.example.budgetbites.domain.repository.CategoryRepository;
+import com.example.budgetbites.domain.repository.CocktailRepository;
+import com.example.budgetbites.domain.repository.GlassRepository;
+import com.example.budgetbites.domain.repository.IngredientRepository;
+import com.example.budgetbites.dto.response.CategoryResponse;
+import com.example.budgetbites.dto.response.CocktailListResponse;
+import com.example.budgetbites.dto.response.CocktailResponse;
+import com.example.budgetbites.dto.response.CocktailStatsResponse;
+import com.example.budgetbites.dto.response.GlassResponse;
+import com.example.budgetbites.dto.response.IngredientResponse;
 
 @Service
 @Transactional(readOnly = true)

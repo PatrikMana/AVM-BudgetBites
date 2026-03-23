@@ -1,7 +1,6 @@
 package com.example.budgetbites.dto.response;
 
 import com.example.budgetbites.domain.entity.Category;
-import com.example.budgetbites.domain.entity.Glass;
 
 public class CategoryResponse {
 

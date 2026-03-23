@@ -1,11 +1,21 @@
 package com.example.budgetbites.controller;
 
-import com.example.budgetbites.dto.response.*;
-import com.example.budgetbites.service.CocktailService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.budgetbites.dto.response.CategoryResponse;
+import com.example.budgetbites.dto.response.CocktailListResponse;
+import com.example.budgetbites.dto.response.CocktailResponse;
+import com.example.budgetbites.dto.response.CocktailStatsResponse;
+import com.example.budgetbites.dto.response.GlassResponse;
+import com.example.budgetbites.dto.response.IngredientResponse;
+import com.example.budgetbites.service.CocktailService;
 
 @RestController
 @RequestMapping("/api/cocktails")

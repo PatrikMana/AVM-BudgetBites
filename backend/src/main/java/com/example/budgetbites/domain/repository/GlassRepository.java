@@ -1,10 +1,11 @@
 package com.example.budgetbites.domain.repository;
 
-import com.example.budgetbites.domain.entity.Glass;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.example.budgetbites.domain.entity.Glass;
 
 @Repository
 public interface GlassRepository extends JpaRepository<Glass, Long> {

@@ -1,10 +1,11 @@
 package com.example.budgetbites.domain.repository;
 
-import com.example.budgetbites.domain.entity.Category;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.example.budgetbites.domain.entity.Category;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
