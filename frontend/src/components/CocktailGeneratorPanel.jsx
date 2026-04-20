@@ -197,7 +197,7 @@ function Dropdown({ label, value, options, onChange, placeholder, icons }) {
 // "popular" | "latest" | "random" = standalone API calls, no filters apply
 
 // ── Main component ──────────────────────────────────────────────────────────
-export default function CocktailGeneratorPanel({ onGenerate }) {
+export default function CocktailGeneratorPanel({ onGenerate, loading: externalLoading }) {
   const [mode, setMode] = useState("search");
   const [name, setName] = useState("");
   const [alcoholic, setAlcoholic] = useState(null);
@@ -208,6 +208,7 @@ export default function CocktailGeneratorPanel({ onGenerate }) {
   const [budget, setBudget] = useState([500]);
   const [randomCount, setRandomCount] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const isLoading = submitting || !!externalLoading;
 
   const isSearch = mode === "search"; // eslint-disable-line
 
@@ -344,7 +345,7 @@ export default function CocktailGeneratorPanel({ onGenerate }) {
                 />
                 <Button
                   onClick={handleGenerate}
-                  disabled={submitting}
+                  disabled={isLoading}
                   size="sm"
                   className={cn(
                     "h-10 w-10 rounded-full p-0 shrink-0 text-zinc-400 transition-colors",
@@ -356,7 +357,7 @@ export default function CocktailGeneratorPanel({ onGenerate }) {
                     }[mode]
                   )}
                 >
-                  {submitting ? (
+                  {isLoading ? (
                     <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <ChevronRight className="h-4 w-4" />
@@ -453,7 +454,7 @@ export default function CocktailGeneratorPanel({ onGenerate }) {
 
                 <button
                   onClick={handleGenerate}
-                  disabled={submitting}
+                  disabled={isLoading}
                   className={cn(
                     "ml-6 rounded-full disabled:opacity-50 p-2 transition-colors shrink-0 text-zinc-400",
                     {
@@ -464,7 +465,7 @@ export default function CocktailGeneratorPanel({ onGenerate }) {
                     }[mode]
                   )}
                 >
-                  {submitting ? (
+                  {isLoading ? (
                     <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <ChevronRight className="h-4 w-4" />
