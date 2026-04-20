@@ -28,6 +28,86 @@ const GLASS_TYPES = [
   "White wine glass", "Wine Glass",
 ];
 
+// Natural pixel dimensions from the SVG files — used to preserve relative scale
+const GLASS_DIMS = {
+  "Balloon Glass":            { w: 50,  h: 98  },
+  "Beer Glass":               { w: 42,  h: 98  },
+  "Beer mug":                 { w: 67,  h: 80  },
+  "Beer pilsner":             { w: 38,  h: 94  },
+  "Brandy snifter":           { w: 42,  h: 63  },
+  "Champagne flute":          { w: 30,  h: 101 },
+  "Cocktail glass":           { w: 53,  h: 82  },
+  "Coffee mug":               { w: 63,  h: 54  },
+  "Collins glass":            { w: 30,  h: 90  },
+  "Copper Mug":               { w: 68,  h: 53  },
+  "Cordial glass":            { w: 24,  h: 62  },
+  "Coupe Glass":              { w: 54,  h: 77  },
+  "Margarita/Coupette glass": { w: 50,  h: 78  },
+  "Highball glass":           { w: 36,  h: 77  },
+  "Hurricane glass":          { w: 38,  h: 87  },
+  "Irish coffee cup":         { w: 53,  h: 77  },
+  "Jar":                      { w: 52,  h: 89  },
+  "Margarita glass":          { w: 55,  h: 78  },
+  "Martini Glass":            { w: 54,  h: 81  },
+  "Mason jar":                { w: 64,  h: 81  },
+  "Nick and Nora Glass":      { w: 43,  h: 81  },
+  "Old-fashioned glass":      { w: 43,  h: 50  },
+  "Parfait glass":            { w: 43,  h: 92  },
+  "Pint glass":               { w: 49,  h: 77  },
+  "Pitcher":                  { w: 101, h: 129 },
+  "Pousse cafe glass":        { w: 26,  h: 66  },
+  "Punch bowl":               { w: 128, h: 99  },
+  "Shot glass":               { w: 23,  h: 37  },
+  "Whiskey Glass":            { w: 47,  h: 58  },
+  "Whiskey sour glass":       { w: 50,  h: 84  },
+  "White wine glass":         { w: 37,  h: 105 },
+  "Wine Glass":               { w: 47,  h: 97  },
+};
+
+const GLASS_MAX_DIM = Math.max(...Object.values(GLASS_DIMS).map(d => Math.max(d.w, d.h))); // 129
+
+function glassStyle(name, maxPx) {
+  const d = GLASS_DIMS[name];
+  if (!d) return { width: maxPx, height: maxPx };
+  const scale = maxPx / GLASS_MAX_DIM;
+  return { width: Math.round(d.w * scale), height: Math.round(d.h * scale) };
+}
+
+const GLASS_ICONS = {
+  "Balloon Glass":           "/GlassesIcons/Ballon Wine Glass.svg",
+  "Beer Glass":              "/GlassesIcons/Beer Glass.svg",
+  "Beer mug":                "/GlassesIcons/Beer Mug.svg",
+  "Beer pilsner":            "/GlassesIcons/Beer pilsner.svg",
+  "Brandy snifter":          "/GlassesIcons/Brandy Snifter.svg",
+  "Champagne flute":         "/GlassesIcons/Champaigne flute.svg",
+  "Cocktail glass":          "/GlassesIcons/Cocktail Glass.svg",
+  "Coffee mug":              "/GlassesIcons/Coffee Mug.svg",
+  "Collins glass":           "/GlassesIcons/Collins Glass.svg",
+  "Copper Mug":              "/GlassesIcons/Copper Mug.svg",
+  "Cordial glass":           "/GlassesIcons/Cordial Glass.svg",
+  "Coupe Glass":             "/GlassesIcons/Coupe Glass.svg",
+  "Highball glass":          "/GlassesIcons/Highball Glass.svg",
+  "Hurricane glass":         "/GlassesIcons/Hurricane Glass.svg",
+  "Irish coffee cup":        "/GlassesIcons/Irish Coffee Cup.svg",
+  "Jar":                     "/GlassesIcons/Jar.svg",
+  "Margarita glass":         "/GlassesIcons/Margarita Glass.svg",
+  "Margarita/Coupette glass":"/GlassesIcons/Coupette Glass.svg",
+  "Martini Glass":           "/GlassesIcons/Martini Glass.svg",
+  "Mason jar":               "/GlassesIcons/Mason Jar.svg",
+  "Nick and Nora Glass":     "/GlassesIcons/Nick&Nora Glass.svg",
+  "Old-fashioned glass":     "/GlassesIcons/Old-Fashioned Glass.svg",
+  "Parfait glass":           "/GlassesIcons/Parfait Glass.svg",
+  "Pint glass":              "/GlassesIcons/Pint Glass.svg",
+  "Pitcher":                 "/GlassesIcons/Pitcher.svg",
+  "Pousse cafe glass":       "/GlassesIcons/Pousse Cafe Glass.svg",
+  "Punch bowl":              "/GlassesIcons/Punch Bowl.svg",
+  "Shot glass":              "/GlassesIcons/Shot Glass.svg",
+  "Whiskey Glass":           "/GlassesIcons/Whiskey Glass.svg",
+  "Whiskey sour glass":      "/GlassesIcons/Whiskey Sour Glass.svg",
+  "White wine glass":        "/GlassesIcons/White Wine Glass.svg",
+  "Wine Glass":              "/GlassesIcons/Wine Glass.svg",
+};
+
 // ── Categories ──────────────────────────────────────────────────────────────
 const CATEGORIES = [
   "Ordinary Drink", "Cocktail", "Shake", "Other / Unknown", "Cocoa",
@@ -56,7 +136,7 @@ export const EXAMPLE_COCKTAIL = {
 };
 
 // ── Simple dropdown component ───────────────────────────────────────────────
-function Dropdown({ label, value, options, onChange, placeholder }) {
+function Dropdown({ label, value, options, onChange, placeholder, icons }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -73,11 +153,14 @@ function Dropdown({ label, value, options, onChange, placeholder }) {
         )}
       >
         <span className="text-zinc-500 text-xs">{label}:</span>
+        {icons && value && (
+          <img src={icons[value]} alt="" style={glassStyle(value, 20)} className="object-contain opacity-70" />
+        )}
         <span>{value || placeholder}</span>
         <ChevronDown className={cn("h-3 w-3 transition-transform", open && "rotate-180")} />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1 z-50 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 shadow-xl min-w-[180px]">
+        <div className="absolute top-full left-0 mt-1 z-50 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 shadow-xl min-w-[200px]">
           {value && (
             <button
               onMouseDown={() => { onChange(null); setOpen(false); }}
@@ -91,10 +174,15 @@ function Dropdown({ label, value, options, onChange, placeholder }) {
               key={opt}
               onMouseDown={() => { onChange(opt); setOpen(false); }}
               className={cn(
-                "w-full px-3 py-2 text-left text-sm hover:bg-zinc-700 transition-colors",
+                "w-full px-3 py-2 text-left text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2.5",
                 value === opt ? "text-purple-400 bg-purple-500/10" : "text-zinc-300"
               )}
             >
+              {icons?.[opt] && (
+                <span className="flex items-center justify-center shrink-0" style={{ width: 36 }}>
+                  <img src={icons[opt]} alt="" style={glassStyle(opt, 32)} className="object-contain opacity-60" />
+                </span>
+              )}
               {opt}
             </button>
           ))}
@@ -304,6 +392,7 @@ export default function CocktailGeneratorPanel({ onGenerate }) {
                   options={GLASS_TYPES}
                   onChange={setSelectedGlass}
                   placeholder="Any"
+                  icons={GLASS_ICONS}
                 />
                 <Dropdown
                   label="Category"
