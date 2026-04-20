@@ -17,18 +17,18 @@ export default function Home() {
     const features = [
         {
             icon: TrendingDown,
-            title: "Automatic Deal Tracking",
-            description: "Uses KupiAPI to track weekly deals in stores",
+            title: "Budget-Based Generation",
+            description: "Enter your available budget and get personalized cocktail suggestions",
         },
         {
             icon: Sparkles,
-            title: "Smart Meal Suggestions",
-            description: "Meal planner based on your budget",
+            title: "Smart Drink Matching",
+            description: "Find the best drinks you can make with your money",
         },
         {
             icon: BookOpen,
-            title: "Save Recipes & Lists",
-            description: "Store your favorite recipes and shopping lists",
+            title: "Save Favorite Drinks",
+            description: "Store your favorite shots and cocktails for next time",
         },
     ];
 
@@ -38,9 +38,9 @@ export default function Home() {
             price: "$0",
             description: "Perfect for trying out",
             features: [
-                "Basic deal tracking",
-                "3 recipes per month",
-                "Simple shopping lists",
+                "Basic drink generation",
+                "3 cocktails per month",
+                "Simple ingredient lists",
             ],
             cta: "Start Free",
             link: "/login",
@@ -49,12 +49,12 @@ export default function Home() {
         {
             name: "Premium",
             price: "$2.99 / month",
-            description: "Advanced planning and notifications",
+            description: "Advanced planning and unlimited drinks",
             features: [
-                "Unlimited recipes",
-                "Advanced meal planning",
-                "Personalized deal notifications",
-                "Export shopping lists",
+                "Unlimited drinks",
+                "Advanced budget maximization",
+                "Personalized drink alerts",
+                "Export ingredient lists",
                 "Priority support",
             ],
             cta: "Go Premium",
@@ -77,15 +77,15 @@ export default function Home() {
                 <div className="max-w-4xl text-center">
                     <div className="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-full mb-6 border border-emerald-500/20">
                         <Sparkles className="h-4 w-4" />
-                        <span className="text-sm font-medium">Save on your food shopping</span>
+                        <span className="text-sm font-medium">Mix the best drinks on your budget</span>
                     </div>
                     
                     <h1 className="text-5xl md:text-7xl font-bold mb-6 text-white">
-                        Budget<span className="text-emerald-500">Bites</span>
+                        Budget<span className="text-emerald-500">Shots</span>
                     </h1>
                     
                     <p className="text-xl md:text-2xl text-zinc-400 mb-8 max-w-2xl mx-auto">
-                        Smart meal planning based on current deals
+                        Smart cocktail generation based on your budget
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -124,7 +124,7 @@ export default function Home() {
                             How it <span className="text-emerald-500">works</span>
                         </h2>
                         <p className="text-zinc-400 text-lg">
-                            Three simple steps to save on food
+                            Three simple steps to mix amazing drinks
                         </p>
                     </div>
 
@@ -206,11 +206,11 @@ export default function Home() {
                     <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                         <div className="flex items-center gap-2">
                             <Sparkles className="h-5 w-5 text-emerald-500" />
-                            <span className="font-semibold text-white">BudgetBites</span>
+                            <span className="font-semibold text-white">BudgetShots</span>
                         </div>
 
                         <p className="text-sm text-zinc-500">
-                            © 2025 BudgetBites. All rights reserved.
+                            © 2026 BudgetShots. All rights reserved.
                         </p>
                     </div>
                 </div>

@@ -8,11 +8,11 @@ const Dashboard = () => {
   const { menuOpen, panelWidth } = useOutletContext() || { menuOpen: false, panelWidth: 0 };
   
   const [inventory, setInventory] = useState([
-    { id: 1, name: "Chicken Breast", quantity: "500g", addedDate: "2025-11-08" },
-    { id: 2, name: "Tomatoes", quantity: "6pcs", addedDate: "2025-11-09" },
-    { id: 3, name: "Pasta", quantity: "250g", addedDate: "2025-11-07" },
-    { id: 4, name: "Onions", quantity: "3pcs", addedDate: "2025-11-08" },
-    { id: 5, name: "Cheese", quantity: "200g", addedDate: "2025-11-10" },
+    { id: 1, name: "Vodka", quantity: "1L", addedDate: "2025-11-08" },
+    { id: 2, name: "Orange Juice", quantity: "2L", addedDate: "2025-11-09" },
+    { id: 3, name: "Limes", quantity: "6pcs", addedDate: "2025-11-07" },
+    { id: 4, name: "Tequila", quantity: "700ml", addedDate: "2025-11-08" },
+    { id: 5, name: "Simple Syrup", quantity: "500ml", addedDate: "2025-11-10" },
   ]);
 
   const [newItem, setNewItem] = useState("");
@@ -22,23 +22,23 @@ const Dashboard = () => {
     {
       id: 1,
       date: "2025-11-09",
-      title: "Mediterranean Dinner",
-      budget: "$5",
-      calories: "450 kcal",
+      title: "Weekend Party Shots",
+      budget: "$15",
+      details: "12 shots",
     },
     {
       id: 2,
       date: "2025-11-08",
-      title: "Quick Weekend Lunch",
-      budget: "$4",
-      calories: "380 kcal",
+      title: "Margarita Night",
+      budget: "$20",
+      details: "4 cocktails",
     },
     {
       id: 3,
       date: "2025-11-07",
-      title: "Family Dinner for 4",
+      title: "Budget Mixes",
       budget: "$10",
-      calories: "520 kcal",
+      details: "6 drinks",
     },
   ];
 
@@ -78,19 +78,19 @@ const Dashboard = () => {
             <div>
               <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
               <p className="text-zinc-400">
-                Welcome back! Create your next delicious meal plan.
+                Welcome back! Create your next amazing drink menu.
               </p>
             </div>
 
-            {/* Generate New Meal Plan Card */}
+            {/* Generate New Drink Menu Card */}
             <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 backdrop-blur">
               <div className="mb-4">
                 <h3 className="text-xl font-semibold text-white flex items-center gap-2 mb-2">
                   <Sparkles className="h-5 w-5 text-emerald-400" />
-                  Generate New Meal Plan
+                  Generate New Drink Menu
                 </h3>
                 <p className="text-zinc-400">
-                  Create a meal plan based on current deals and your budget
+                  Create a drink menu based on your bar ingredients and budget
                 </p>
               </div>
               <Link to="/generate">
@@ -124,7 +124,7 @@ const Dashboard = () => {
                           Budget: <span className="text-white font-medium">{gen.budget}</span>
                         </div>
                         <div className="text-zinc-400">
-                          Calories: <span className="text-white font-medium">{gen.calories}</span>
+                          Yield: <span className="text-white font-medium">{gen.details}</span>
                         </div>
                       </div>
                     </div>
@@ -135,11 +135,11 @@ const Dashboard = () => {
           </div>
         </main>
 
-        {/* Food Inventory Sidebar - RIGHT SIDE */}
+        {/* Drink Ingredients Sidebar - RIGHT SIDE */}
         <aside className="hidden lg:block w-80 border-l border-white/10 bg-zinc-900/50 min-h-screen">
           <div className="p-6 space-y-4">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">My Inventory</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">My Bar</h2>
               <p className="text-sm text-zinc-400">
                 What you have at home
               </p>
@@ -148,13 +148,13 @@ const Dashboard = () => {
             {/* Add Item Form */}
             <div className="rounded-2xl border border-white/10 bg-zinc-900/80 p-4 backdrop-blur space-y-3">
               <input
-                placeholder="Food name"
+                placeholder="Ingredient name"
                 value={newItem}
                 onChange={(e) => setNewItem(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-zinc-800/60 px-4 py-2.5 text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
               <input
-                placeholder="Quantity (e.g. 500g, 3pcs)"
+                placeholder="Quantity (e.g. 1L, 50ml, 3pcs)"
                 value={newQuantity}
                 onChange={(e) => setNewQuantity(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-zinc-800/60 px-4 py-2.5 text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"

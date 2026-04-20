@@ -148,7 +148,7 @@ function Dropdown({ label, value, options, onChange, placeholder, icons }) {
         className={cn(
           "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all",
           value
-            ? "bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
+            ? "bg-green-500/15 text-green-300 hover:bg-green-500/25"
             : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700"
         )}
       >
@@ -174,8 +174,8 @@ function Dropdown({ label, value, options, onChange, placeholder, icons }) {
               key={opt}
               onMouseDown={() => { onChange(opt); setOpen(false); }}
               className={cn(
-                "w-full px-3 py-2 text-left text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2.5",
-                value === opt ? "text-purple-400 bg-purple-500/10" : "text-zinc-300"
+                "w-full px-3 py-2 text-left text-sm hover:bg-zinc-700 transition-colors",
+                value === opt ? "text-green-400 bg-green-500/10" : "text-zinc-300"
               )}
             >
               {icons?.[opt] && (
@@ -275,18 +275,18 @@ export default function CocktailGeneratorPanel({ onGenerate }) {
         {/* ── Mode tabs ────────────────────────────────────────────── */}
         <div className="flex items-center gap-1.5 mb-3 self-center">
           {[
-            { key: "search", label: "Search", icon: Wine },
-            { key: "popular", label: "Popular", icon: Star },
-            { key: "latest", label: "Latest", icon: Clock },
-            { key: "random", label: "Random", icon: Shuffle },
-          ].map(({ key, label, icon: Icon }) => (
+            { key: "search", label: "Search", icon: Wine, activeClass: "bg-green-500/15 text-green-400 hover:bg-green-500/25" },
+            { key: "popular", label: "Popular", icon: Star, activeClass: "bg-yellow-500/15 text-yellow-400 hover:bg-yellow-500/25" },
+            { key: "latest", label: "Latest", icon: Clock, activeClass: "bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25" },
+            { key: "random", label: "Random", icon: Shuffle, activeClass: "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25" },
+          ].map(({ key, label, icon: Icon, activeClass }) => (
             <button
               key={key}
               onClick={() => setMode(key)}
               className={cn(
                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
                 mode === key
-                  ? "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25"
+                  ? activeClass
                   : "bg-zinc-800/40 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300"
               )}
             >
@@ -346,7 +346,15 @@ export default function CocktailGeneratorPanel({ onGenerate }) {
                   onClick={handleGenerate}
                   disabled={submitting}
                   size="sm"
-                  className="h-10 w-10 rounded-full hover:bg-purple-500/20 p-0 shrink-0 text-zinc-400 hover:text-purple-400 transition-colors"
+                  className={cn(
+                    "h-10 w-10 rounded-full p-0 shrink-0 text-zinc-400 transition-colors",
+                    {
+                      search: "hover:bg-green-500/20 hover:text-green-400",
+                      popular: "hover:bg-yellow-500/20 hover:text-yellow-400",
+                      latest: "hover:bg-cyan-500/20 hover:text-cyan-400",
+                      random: "hover:bg-purple-500/20 hover:text-purple-400",
+                    }[mode]
+                  )}
                 >
                   {submitting ? (
                     <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -446,12 +454,20 @@ export default function CocktailGeneratorPanel({ onGenerate }) {
                 <button
                   onClick={handleGenerate}
                   disabled={submitting}
-                  className="ml-6 rounded-full hover:bg-purple-500/20 disabled:opacity-50 p-2 transition-colors shrink-0 text-zinc-400 hover:text-purple-400"
+                  className={cn(
+                    "ml-6 rounded-full disabled:opacity-50 p-2 transition-colors shrink-0 text-zinc-400",
+                    {
+                      search: "hover:bg-green-500/20 hover:text-green-400",
+                      popular: "hover:bg-yellow-500/20 hover:text-yellow-400",
+                      latest: "hover:bg-cyan-500/20 hover:text-cyan-400",
+                      random: "hover:bg-purple-500/20 hover:text-purple-400",
+                    }[mode]
+                  )}
                 >
                   {submitting ? (
                     <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-white" />
+                    <ChevronRight className="h-4 w-4" />
                   )}
                 </button>
               </div>
