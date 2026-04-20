@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: budgetshots-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-budgetshots}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-budgetshots_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-budgetshots}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./DB/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./DB/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-budgetshots} -d ${POSTGRES_DB:-budgetshots}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  sync:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: budgetshots-sync
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-budgetshots}:${POSTGRES_PASSWORD:-budgetshots_secret}@db:5432/${POSTGRES_DB:-budgetshots}
+      SYNC_INTERVAL_HOURS: ${SYNC_INTERVAL_HOURS:-12}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
