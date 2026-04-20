@@ -68,7 +68,7 @@ function Dropdown({ label, value, options, onChange, placeholder }) {
         className={cn(
           "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-all",
           value
-            ? "bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
+            ? "bg-green-500/15 text-green-300 hover:bg-green-500/25"
             : "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-700"
         )}
       >
@@ -92,7 +92,7 @@ function Dropdown({ label, value, options, onChange, placeholder }) {
               onMouseDown={() => { onChange(opt); setOpen(false); }}
               className={cn(
                 "w-full px-3 py-2 text-left text-sm hover:bg-zinc-700 transition-colors",
-                value === opt ? "text-purple-400 bg-purple-500/10" : "text-zinc-300"
+                value === opt ? "text-green-400 bg-green-500/10" : "text-zinc-300"
               )}
             >
               {opt}
