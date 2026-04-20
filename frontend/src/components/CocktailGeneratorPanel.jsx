@@ -174,7 +174,7 @@ function Dropdown({ label, value, options, onChange, placeholder, icons }) {
               key={opt}
               onMouseDown={() => { onChange(opt); setOpen(false); }}
               className={cn(
-                "w-full px-3 py-2 text-left text-sm hover:bg-zinc-700 transition-colors",
+                "w-full px-3 py-2 text-left text-sm hover:bg-zinc-700 transition-colors flex items-center gap-2.5",
                 value === opt ? "text-green-400 bg-green-500/10" : "text-zinc-300"
               )}
             >
