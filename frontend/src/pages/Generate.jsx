@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import CocktailGeneratorPanel from "../components/CocktailGeneratorPanel.jsx";
 import CocktailResults from "../components/CocktailResults.jsx";
@@ -10,7 +10,25 @@ export default function Generate() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [paywall, setPaywall] = useState(null);
+  const [glassMap, setGlassMap] = useState({});       // name → id
+  const [categoryMap, setCategoryMap] = useState({}); // name → id
   const resultsRef = useRef(null);
+
+  useEffect(() => {
+    const buildMap = (list) => {
+      const m = {};
+      list.forEach(x => { m[x.name] = x.id; });
+      return m;
+    };
+    authFetch("/api/cocktails/glasses")
+      .then(r => r.ok ? r.json() : [])
+      .then(list => setGlassMap(buildMap(list)))
+      .catch(() => {});
+    authFetch("/api/cocktails/categories")
+      .then(r => r.ok ? r.json() : [])
+      .then(list => setCategoryMap(buildMap(list)))
+      .catch(() => {});
+  }, []);
 
   const handleGenerate = async (filters) => {
     setLoading(true);
@@ -55,8 +73,17 @@ export default function Generate() {
           lists.push(await res.json());
         }
 
+        if (filters.glass && glassMap[filters.glass]) {
+          const res = await authFetch(`/api/cocktails/glass/${glassMap[filters.glass]}`);
+          if (res.ok) lists.push(await res.json());
+        }
+
+        if (filters.category && categoryMap[filters.category]) {
+          const res = await authFetch(`/api/cocktails/category/${categoryMap[filters.category]}`);
+          if (res.ok) lists.push(await res.json());
+        }
+
         if (lists.length === 0) {
-          // Nothing specific — fall back to a name search with empty string? Just bail.
           data = [];
         } else {
           // Intersect by id
@@ -65,10 +92,8 @@ export default function Generate() {
           data = baseList.filter(c => idSets.every(s => s.has(c.id)));
         }
 
-        // Client-side filter by other criteria
-        if (filters.glass)     data = data.filter(c => c.glass === filters.glass);
+        // Remaining filter still applied client-side
         if (filters.alcoholic) data = data.filter(c => c.alcoholicType === filters.alcoholic);
-        if (filters.category)  data = data.filter(c => c.category === filters.category);
       }
 
       setResults(data);

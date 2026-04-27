@@ -115,6 +115,46 @@ const CATEGORIES = [
   "Beer", "Soft Drink",
 ];
 
+// ── Levenshtein distance for fuzzy ingredient matching ─────────────────────
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let prev = Array(b.length + 1).fill(0).map((_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const curr = [i];
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+    }
+    prev = curr;
+  }
+  return prev[b.length];
+}
+
+// Find best match — returns the canonical name if close enough, else null
+function fuzzyMatch(input, candidates) {
+  const q = input.trim().toLowerCase();
+  if (!q || !candidates.length) return null;
+
+  // 1. Exact match (case-insensitive)
+  const exact = candidates.find(c => c.toLowerCase() === q);
+  if (exact) return exact;
+
+  // 2. Starts-with (e.g. "lim" → "Lime", "Limeade")
+  const starts = candidates.find(c => c.toLowerCase().startsWith(q));
+  if (starts && q.length >= 3) return starts;
+
+  // 3. Levenshtein within tolerance (1 for short, 2 for long)
+  const tol = q.length <= 4 ? 1 : 2;
+  let best = null, bestDist = Infinity;
+  for (const c of candidates) {
+    const d = levenshtein(q, c.toLowerCase());
+    if (d < bestDist) { best = c; bestDist = d; }
+  }
+  return bestDist <= tol ? best : null;
+}
+
 // ── Ingredient image helper ─────────────────────────────────────────────────
 function ingredientImgUrl(name, size = "small") {
   const slug = name.trim().replace(/\s+/g, "%20");
@@ -138,7 +178,41 @@ export const EXAMPLE_COCKTAIL = {
 // ── Simple dropdown component ───────────────────────────────────────────────
 function Dropdown({ label, value, options, onChange, placeholder, icons }) {
   const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
   const ref = useRef(null);
+  const resetTimer = useRef(null);
+
+  // Capture keystrokes while open: filter on letters, backspace removes, esc closes
+  useEffect(() => {
+    if (!open) {
+      setTyped("");
+      return;
+    }
+    const handler = (e) => {
+      if (e.key === "Escape") { setOpen(false); return; }
+      if (e.key === "Backspace") {
+        setTyped(t => t.slice(0, -1));
+        e.preventDefault();
+      } else if (e.key.length === 1 && /^[\w \-/]$/.test(e.key)) {
+        setTyped(t => t + e.key);
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open]);
+
+  // Reset typed after 1.5s of no typing
+  useEffect(() => {
+    if (!typed) return;
+    clearTimeout(resetTimer.current);
+    resetTimer.current = setTimeout(() => setTyped(""), 1500);
+    return () => clearTimeout(resetTimer.current);
+  }, [typed]);
+
+  const visibleOptions = typed
+    ? options.filter(o => o.toLowerCase().includes(typed.toLowerCase()))
+    : options;
 
   return (
     <div className="relative" ref={ref}>
@@ -161,7 +235,13 @@ function Dropdown({ label, value, options, onChange, placeholder, icons }) {
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1 z-50 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-zinc-900 shadow-xl min-w-[200px]">
-          {value && (
+          {typed && (
+            <div className="sticky top-0 bg-zinc-900 px-3 py-2 border-b border-white/5 text-xs text-zinc-400 flex items-center gap-2">
+              <span className="text-zinc-500">Searching:</span>
+              <span className="text-green-400 font-mono">{typed}</span>
+            </div>
+          )}
+          {value && !typed && (
             <button
               onMouseDown={() => { onChange(null); setOpen(false); }}
               className="w-full px-3 py-2 text-left text-sm text-zinc-500 hover:bg-zinc-700 border-b border-white/5"
@@ -169,7 +249,7 @@ function Dropdown({ label, value, options, onChange, placeholder, icons }) {
               Clear
             </button>
           )}
-          {options.map((opt) => (
+          {visibleOptions.map((opt) => (
             <button
               key={opt}
               onMouseDown={() => { onChange(opt); setOpen(false); }}
@@ -186,6 +266,9 @@ function Dropdown({ label, value, options, onChange, placeholder, icons }) {
               {opt}
             </button>
           ))}
+          {visibleOptions.length === 0 && (
+            <div className="px-3 py-3 text-xs text-zinc-500 text-center">No matches</div>
+          )}
         </div>
       )}
     </div>
@@ -209,6 +292,8 @@ export default function CocktailGeneratorPanel({ onGenerate, loading: externalLo
   const [randomCount, setRandomCount] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [alcoholicOptions, setAlcoholicOptions] = useState(["Alcoholic", "Non alcoholic"]);
+  const [validIngredients, setValidIngredients] = useState([]);
+  const [ingredientError, setIngredientError] = useState(null);
   const isLoading = submitting || !!externalLoading;
 
   useEffect(() => {
@@ -218,14 +303,29 @@ export default function CocktailGeneratorPanel({ onGenerate, loading: externalLo
         if (Array.isArray(data) && data.length) setAlcoholicOptions(data);
       })
       .catch(() => {});
+    fetch("/api/cocktails/all-ingredients")
+      .then(r => r.ok ? r.json() : [])
+      .then(list => setValidIngredients(list.map(i => i.name).filter(Boolean)))
+      .catch(() => {});
   }, []);
 
   const isSearch = mode === "search"; // eslint-disable-line
 
   const addIngredient = () => {
     const trimmed = ingredientInput.trim();
-    if (trimmed && !ingredients.includes(trimmed)) {
-      setIngredients((prev) => [...prev, trimmed]);
+    if (!trimmed) return;
+    setIngredientError(null);
+
+    // Match against known ingredients (only if list has loaded)
+    const match = validIngredients.length ? fuzzyMatch(trimmed, validIngredients) : trimmed;
+    if (!match) {
+      setIngredientError(`"${trimmed}" doesn't exist`);
+      setTimeout(() => setIngredientError(null), 3000);
+      return;
+    }
+
+    if (!ingredients.includes(match)) {
+      setIngredients(prev => [...prev, match]);
     }
     setIngredientInput("");
   };
@@ -376,23 +476,28 @@ export default function CocktailGeneratorPanel({ onGenerate, loading: externalLo
               </div>
 
               {/* ── Ingredient input ────────────────────────────────────── */}
-              <div className="px-4 pb-3 flex items-center gap-2 border-t border-white/5 pt-3">
-                <Sparkles className="h-4 w-4 text-emerald-500 shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Add ingredient (e.g. Tequila, Lime juice...)"
-                  value={ingredientInput}
-                  onChange={(e) => setIngredientInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="flex-1 bg-transparent text-sm text-zinc-300 placeholder:text-zinc-600 outline-none"
-                />
-                {ingredientInput.trim() && (
-                  <button
-                    onClick={addIngredient}
-                    className="text-xs text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/25 rounded-md px-2 py-1 transition-colors shrink-0"
-                  >
-                    + Add
-                  </button>
+              <div className="px-4 pb-3 border-t border-white/5 pt-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Add ingredient (e.g. Tequila, Lime juice...)"
+                    value={ingredientInput}
+                    onChange={(e) => setIngredientInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1 bg-transparent text-sm text-zinc-300 placeholder:text-zinc-600 outline-none"
+                  />
+                  {ingredientInput.trim() && (
+                    <button
+                      onClick={addIngredient}
+                      className="text-xs text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/25 rounded-md px-2 py-1 transition-colors shrink-0"
+                    >
+                      + Add
+                    </button>
+                  )}
+                </div>
+                {ingredientError && (
+                  <div className="mt-1.5 ml-6 text-xs text-red-400">{ingredientError}</div>
                 )}
               </div>
 
