@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Slider } from "./ui/slider";
@@ -208,7 +208,17 @@ export default function CocktailGeneratorPanel({ onGenerate, loading: externalLo
   const [budget, setBudget] = useState([500]);
   const [randomCount, setRandomCount] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [alcoholicOptions, setAlcoholicOptions] = useState(["Alcoholic", "Non alcoholic"]);
   const isLoading = submitting || !!externalLoading;
+
+  useEffect(() => {
+    fetch("/api/cocktails/alcoholic-types")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (Array.isArray(data) && data.length) setAlcoholicOptions(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const isSearch = mode === "search"; // eslint-disable-line
 
@@ -391,7 +401,7 @@ export default function CocktailGeneratorPanel({ onGenerate, loading: externalLo
                 <Dropdown
                   label="Type"
                   value={alcoholic}
-                  options={["Alcoholic", "Non alcoholic"]}
+                  options={alcoholicOptions}
                   onChange={setAlcoholic}
                   placeholder="Any"
                 />
